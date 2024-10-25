@@ -29,7 +29,7 @@ import Profile from './pages/profilePage/Profile';
 import AddNewProduct from './pages/addProduct/AddNewProduct';
 import ProductDetail from './pages/productView/ProductDetails';
 import YoutubeVideos from './pages/youtubeChannel/YoutubeVideos';
-import Wishlist from './pages/wishlist/Wishlist';
+import WishList from './pages/wishlist/WishList';
 
 
 const ProtectedRoute = ({ children, requireAuth }) => {
@@ -81,7 +81,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'wishlist',
-        element: <Wishlist/>,
+        element: <WishList/>,
       },
       {
         path: 'conversations',
