@@ -1,0 +1,145 @@
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f0f2f5;
+}
+
+.auth-form {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-form h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #1877f2;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border: 1px solid #dddfe2;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.auth-form button {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.auth-form button:hover {
+  background-color: #ff9800;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #ff9800;
+  color: white;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-info span {
+  margin-right: 10px;
+}
+
+.user-info button {
+  padding: 5px 10px;
+  background-color: white;
+  color: #ff9800;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-info button:hover {
+  background-color: #f0f0f0;
+}
+
+.conversation-content {
+  display: flex;
+  height: calc(100vh - 60px); /* Adjust based on your topbar height */
+}
+
+/* Adjust other styles as needed to accommodate the new layout */
+
+.login-method-toggle,
+.register-method-toggle {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.login-method-toggle button,
+.register-method-toggle button {
+  flex: 1;
+  padding: 0.5rem;
+  background-color: #f0f2f5;
+  border: none;
+  cursor: pointer;
+}
+
+.login-method-toggle button.active,
+.register-method-toggle button.active {
+  background-color: #ff9800;
+  color: white;
+}
+
+.oauth-buttons {
+  margin-top: 1rem;
+}
+
+.oauth-buttons button {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.google-btn {
+  background-color: #db4437;
+  color: white;
+}
+
+.facebook-btn {
+  background-color: #4267B2;
+  color: white;
+}
+
+.google-btn:hover {
+  background-color: #c53929;
+}
+
+.facebook-btn:hover {
+  background-color: #365899;
+}
