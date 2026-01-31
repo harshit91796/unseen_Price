@@ -2,6 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Close, Store, LocationOn, Phone, Description, Email, AddAPhoto, Delete } from '@mui/icons-material';
 import styles from './AddShopModal.module.css';
+
+const MODAL_PORTAL_ID = 'add-shop-modal-portal';
+
+function getOrCreateModalPortal(): HTMLElement {
+  let el = document.getElementById(MODAL_PORTAL_ID);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = MODAL_PORTAL_ID;
+    el.setAttribute('aria-hidden', 'true');
+    el.style.cssText =
+      'position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483647;pointer-events:none;';
+    document.body.insertBefore(el, document.body.firstChild);
+  }
+  return el;
+}
 import { FaCity } from 'react-icons/fa';
 import { uploadImagesToSupabase } from '../../../services/service';
 import { toast, ToastContainer } from 'react-toastify';
@@ -40,6 +55,31 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const scrollY = window.scrollY;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    const root = document.getElementById('root');
+    const prevRootOverflow = root ? root.style.overflow : '';
+    const prevRootPosition = root ? root.style.position : '';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    if (root) {
+      root.style.overflow = 'hidden';
+      root.style.position = 'relative';
+    }
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      if (root) {
+        root.style.overflow = prevRootOverflow;
+        root.style.position = prevRootPosition;
+      }
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -433,7 +473,7 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
     </div>
   );
 
-  return createPortal(modalElement, document.body);
+  return createPortal(modalElement, getOrCreateModalPortal());
 };
 
 export default AddShopModal;
