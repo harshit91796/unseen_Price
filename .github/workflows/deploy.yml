@@ -36,7 +36,7 @@ jobs:
 
       - name: Deploy to S3
         # Replace 'unseenpricebucket' with your ACTUAL bucket name
-        run: aws s3 sync dist/ s3://unseenprice-frontend --delete
+        run: aws s3 sync dist/ s3://unseenpricebucket --delete
 
       - name: Invalidate CloudFront Cache
         run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --paths "/*"
