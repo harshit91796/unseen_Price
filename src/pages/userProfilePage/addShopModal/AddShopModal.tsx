@@ -12,7 +12,7 @@ function getOrCreateModalPortal(): HTMLElement {
     el.id = MODAL_PORTAL_ID;
     el.setAttribute('aria-hidden', 'true');
     el.style.cssText =
-      'position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483647;pointer-events:auto;';
+      'position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483647;pointer-events:none;';
     document.body.insertBefore(el, document.body.firstChild);
   }
   return el;
@@ -57,28 +57,41 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    const htmlEl = document.documentElement;
+    const bodyEl = document.body;
+    const rootEl = document.getElementById('root');
+
     if (isOpen) {
+      // Save current state
       const scrollY = window.scrollY;
-      const prevHtmlOverflow = document.documentElement.style.overflow;
-      const prevBodyOverflow = document.body.style.overflow;
-      const root = document.getElementById('root');
-      const prevRootOverflow = root ? root.style.overflow : '';
-      const prevRootPosition = root ? root.style.position : '';
+      const prevHtmlOverflow = htmlEl.style.overflow;
+      const prevBodyOverflow = bodyEl.style.overflow;
+      const prevRootOverflow = rootEl ? rootEl.style.overflow : '';
+      const prevRootPosition = rootEl ? rootEl.style.position : '';
       
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-      if (root) {
-        root.style.overflow = 'hidden';
-        root.style.position = 'relative';
+      // Lock scrolling
+      htmlEl.style.overflow = 'hidden';
+      bodyEl.style.overflow = 'hidden';
+      if (rootEl) {
+        rootEl.style.overflow = 'hidden';
+        rootEl.style.position = 'relative';
       }
       
+      // Cleanup function
       return () => {
-        document.documentElement.style.overflow = prevHtmlOverflow || '';
-        document.body.style.overflow = prevBodyOverflow || '';
-        if (root) {
-          root.style.overflow = prevRootOverflow || '';
-          root.style.position = prevRootPosition || '';
+        // Force restore styles
+        htmlEl.style.overflow = prevHtmlOverflow || '';
+        bodyEl.style.overflow = prevBodyOverflow || '';
+        if (rootEl) {
+          rootEl.style.overflow = prevRootOverflow || '';
+          rootEl.style.position = prevRootPosition || '';
         }
+        
+        // If still hidden after restore, explicitly set to visible
+        if (htmlEl.style.overflow === 'hidden') htmlEl.style.overflow = '';
+        if (bodyEl.style.overflow === 'hidden') bodyEl.style.overflow = '';
+        if (rootEl && rootEl.style.overflow === 'hidden') rootEl.style.overflow = '';
+        
         window.scrollTo(0, scrollY);
       };
     }
@@ -219,7 +232,15 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
     <div 
       className={styles.modalOverlay} 
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{ pointerEvents: 'auto' }}
+      style={{ 
+        pointerEvents: 'auto',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 2147483647
+      }}
     >
       <ToastContainer />
       <div 
