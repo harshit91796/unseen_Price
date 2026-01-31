@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Close, Store, LocationOn, Phone, Description, Email, AddAPhoto, Delete } from '@mui/icons-material';
 import styles from './AddShopModal.module.css';
 import { FaCity } from 'react-icons/fa';
@@ -171,10 +172,10 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
 
   if (!isOpen) return null;
 
-  return (
-    <div className={styles.modalOverlay}>
+  const modalElement = (
+    <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <ToastContainer />
-      <div className={styles.modalContent}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h2><Store /> Add New Shop</h2>
           <button className={styles.closeButton} onClick={onClose}>
@@ -431,6 +432,8 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
       </div>
     </div>
   );
+
+  return createPortal(modalElement, document.body);
 };
 
 export default AddShopModal;
