@@ -15,7 +15,7 @@
   align-items: center !important;
   z-index: 2147483647 !important;
   isolation: isolate;
-  overflow: auto !important;
+  overflow: hidden !important;
   box-sizing: border-box !important;
   transform: translateZ(0);
   -webkit-overflow-scrolling: touch;
@@ -31,11 +31,13 @@
   width: 90%;
   max-width: 600px;
   max-height: calc(100vh - 2rem);
-  overflow-y: auto;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   animation: slideIn 0.3s ease-out;
   margin: auto;
   flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes slideIn {
