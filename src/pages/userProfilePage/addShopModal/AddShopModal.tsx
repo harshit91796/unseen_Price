@@ -12,7 +12,7 @@ function getOrCreateModalPortal(): HTMLElement {
     el.id = MODAL_PORTAL_ID;
     el.setAttribute('aria-hidden', 'true');
     el.style.cssText =
-      'position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483647;pointer-events:none;';
+      'position:fixed;top:0;left:0;width:100%;height:100%;z-index:2147483647;pointer-events:auto;';
     document.body.insertBefore(el, document.body.firstChild);
   }
   return el;
@@ -213,9 +213,17 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
   if (!isOpen) return null;
 
   const modalElement = (
-    <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div 
+      className={styles.modalOverlay} 
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{ pointerEvents: 'auto' }}
+    >
       <ToastContainer />
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+      <div 
+        className={styles.modalContent} 
+        onClick={(e) => e.stopPropagation()}
+        style={{ pointerEvents: 'auto' }}
+      >
         <div className={styles.modalHeader}>
           <h2><Store /> Add New Shop</h2>
           <button className={styles.closeButton} onClick={onClose}>

@@ -19,7 +19,6 @@
   box-sizing: border-box !important;
   transform: translateZ(0);
   -webkit-overflow-scrolling: touch;
-  pointer-events: auto;
 }
 
 .modalContent {
