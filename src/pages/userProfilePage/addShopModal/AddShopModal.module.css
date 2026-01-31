@@ -1,0 +1,438 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9000;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.modalHeader h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #333;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.closeButton:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inputGroup {
+  position: relative;
+  width: 100%;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+}
+
+.inputGroup input,
+.inputGroup textarea,
+.inputGroup select {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.inputGroup textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.inputGroup input:focus,
+.inputGroup textarea:focus,
+.inputGroup select:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+  flex-direction: row;
+}
+
+.timeInputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timeInputs input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 120px;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancelButton,
+.submitButton {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelButton {
+  background: none;
+  border: 1px solid #ddd;
+  color: #666;
+}
+
+.submitButton {
+  background: #2196f3;
+  border: none;
+  color: white;
+}
+
+.cancelButton:hover {
+  background: #f5f5f5;
+}
+
+.submitButton:hover {
+  background: #1976d2;
+}
+
+@media (max-width: 768px) {
+  .modalContent {
+    padding: 16px;
+    width: 95%;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .timeInputs {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .timeInputs input {
+    flex: 1;
+    width: auto;
+  }
+
+  .buttonGroup {
+    flex-direction: column-reverse;
+    margin-top: 16px;
+  }
+
+  .cancelButton,
+  .submitButton {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .inputGroup input,
+  .inputGroup textarea,
+  .inputGroup select {
+    padding: 14px 12px 14px 40px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalContent {
+    padding: 12px;
+    width: 100%;
+    border-radius: 0;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  .modalHeader h2 {
+    font-size: 1.2rem;
+  }
+}
+
+.imageUploadSection {
+  margin-bottom: 2rem;
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.imageUploadSection h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-dark);
+}
+
+.imagePreviewContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mainImageContainer {
+  position: relative;
+  width: 100%;
+}
+
+.mainImage {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 200px;
+  border: 2px dashed var(--accent-color);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.imagePlaceholder:hover {
+  background: #f8f9fa;
+  border-color: var(--primary-color);
+}
+
+.imagePlaceholder svg {
+  font-size: 2rem;
+  color: var(--accent-color);
+}
+
+.imagePlaceholder p {
+  color: var(--accent-color);
+  font-size: 0.9rem;
+}
+
+.imageThumbnails {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0.5rem;
+}
+
+.thumbnail {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnail.selected {
+  border-color: var(--primary-color);
+}
+
+.removeThumbnailBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 71, 87, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  color: white;
+  opacity: 0;
+}
+
+.thumbnail:hover .removeThumbnailBtn {
+  opacity: 1;
+}
+
+.removeThumbnailBtn:hover {
+  background: #ff4757;
+  transform: scale(1.1);
+}
+
+.removeThumbnailBtn svg {
+  font-size: 16px;
+}
+
+.uploadButton {
+  width: 80px;
+  height: 80px;
+  border: 2px dashed var(--accent-color);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.uploadButton:hover {
+  background: #f8f9fa;
+  border-color: var(--primary-color);
+}
+
+.uploadButton svg {
+  font-size: 1.5rem;
+  color: var(--accent-color);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.removeImageBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 71, 87, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  color: white;
+}
+
+.removeImageBtn:hover {
+  background: #ff4757;
+  transform: scale(1.1);
+}
+
+.removeImageBtn svg {
+  font-size: 20px;
+}
+
+.locationInputGroup {
+  position: relative;
+  width: 100%;
+}
+
+.locationSuggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.suggestionItem {
+  padding: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 14px;
+  color: #333;
+}
+
+.suggestionItem:hover {
+  background-color: #f5f5f5;
+}
+
+.suggestionItem:not(:last-child) {
+  border-bottom: 1px solid #eee;
+}

@@ -1,0 +1,43 @@
+.audio-player-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    margin-top: 20px;
+    height: 40px;
+    
+  }
+  
+  /* .play-button {
+    background-color: #9d9fa2; 
+    border: none;
+    color: white;
+    padding: 15px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .play-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .play-button.playing {
+    background-color: #28a745; 
+  }
+  
+  .play-button svg {
+    width: 20px;
+    height: 20px;
+  } */
+  
+  /* Optional: Style for audio element, if visible */
+  audio {
+    display: none;
+  }
+  

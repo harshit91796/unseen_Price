@@ -1,0 +1,31 @@
+
+@import 'variable';
+.cropper{
+    width: 100%;
+    height: 100%;
+    position: relative;
+    padding: 5% 0;
+    background-color: black;
+    position:absolute;
+    left:0;
+    right:0;
+
+    .grid{
+        width: 100%;
+        height: 85%;
+        position: relative;
+        // border: 1px solid grey;
+        margin-bottom: 2%;
+
+    
+    }
+    button{
+        width: 46%;
+        color: white;
+        border: none;
+        font-size: 2.2vmax;
+        padding: 2%;
+        margin: 2%;
+        background-color: $primary-accent-color;
+    }
+}

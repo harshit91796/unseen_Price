@@ -1,0 +1,155 @@
+/* General Styles */
+.pageContainer {
+    font-family: Arial, sans-serif;
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+    height: 90vh;
+    overflow-y: auto;
+  }
+  
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+  }
+  
+  .logo {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .navbar a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: #333;
+  }
+  
+  /* Main Section */
+  .mainSection {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  
+  /* Image Grid */
+  .imageGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .productImage {
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  /* Product Details */
+  .productDetails {
+    background-color: #f8f8f8;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  .price {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .discount {
+    font-size: 16px;
+    text-decoration: line-through;
+    margin-left: 10px;
+    color: red;
+  }
+  
+  .rating {
+    margin-top: 10px;
+  }
+  
+  .availability {
+    margin: 10px 0;
+    color: green;
+  }
+  
+  .addToCartBtn,
+  .buyNowBtn {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .addToCartBtn {
+    background-color: #ff9800;
+    color: white;
+  }
+  
+  .buyNowBtn {
+    background-color: #4caf50;
+    color: white;
+  }
+  
+  /* Product Description */
+  .productDescription {
+    margin-top: 20px;
+  }
+  
+  /* Related Products and Frequently Bought Together */
+  .relatedProducts,
+  .frequentlyBought {
+    margin-top: 100px;
+    border-radius: 20px;
+  }
+
+  .frequentlyBought img{
+    width: 100%;
+    height: 100%;
+  }
+
+  .relatedProducts img{
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+  }
+  
+  .productGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+  }
+  
+  .productCard {
+    text-align: center;
+  }
+  
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 50px;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .header{
+      flex-direction: column;
+    }
+    .mainSection {
+      grid-template-columns: 1fr;
+    }
+  
+    .imageGrid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  

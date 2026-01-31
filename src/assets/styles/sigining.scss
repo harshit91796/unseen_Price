@@ -1,0 +1,55 @@
+@import 'variable';
+
+.login-page {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  padding: 5%;
+  display: flex;
+  flex-direction: column;
+
+
+h2{
+  font-size: 3.5vmax;
+}
+
+  .phone {
+    padding: 10px;
+    font-size: 2vmax;
+    border-radius: 5px;
+    width: 100%;
+    border: 1px solid grey;
+    background-color: #f1f1f1;
+    margin-bottom: 10px;
+  }
+
+
+  .otp-container{
+    width: 70%;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+
+    input{
+      font-size: 5vmax;
+      font-weight: 400;
+      width: 50px;
+      text-align: center;
+      // box-shadow: 0 0 5px #00000030;
+      border-radius: 10px;
+      border: 2px solid #b100c8;
+      border: none;
+outline: none;
+    }
+  }
+  button {
+    border-radius: 5px;
+    // margin-top: auto;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    font-size: 2.5vmax;
+    color:$setup-button;
+    background: $setup-button-background;
+  }
+}
