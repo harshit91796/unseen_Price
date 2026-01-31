@@ -57,28 +57,31 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
-    const scrollY = window.scrollY;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-    const prevBodyOverflow = document.body.style.overflow;
-    const root = document.getElementById('root');
-    const prevRootOverflow = root ? root.style.overflow : '';
-    const prevRootPosition = root ? root.style.position : '';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-    if (root) {
-      root.style.overflow = 'hidden';
-      root.style.position = 'relative';
-    }
-    return () => {
-      document.documentElement.style.overflow = prevHtmlOverflow;
-      document.body.style.overflow = prevBodyOverflow;
+    if (isOpen) {
+      const scrollY = window.scrollY;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
+      const prevBodyOverflow = document.body.style.overflow;
+      const root = document.getElementById('root');
+      const prevRootOverflow = root ? root.style.overflow : '';
+      const prevRootPosition = root ? root.style.position : '';
+      
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
       if (root) {
-        root.style.overflow = prevRootOverflow;
-        root.style.position = prevRootPosition;
+        root.style.overflow = 'hidden';
+        root.style.position = 'relative';
       }
-      window.scrollTo(0, scrollY);
-    };
+      
+      return () => {
+        document.documentElement.style.overflow = prevHtmlOverflow || '';
+        document.body.style.overflow = prevBodyOverflow || '';
+        if (root) {
+          root.style.overflow = prevRootOverflow || '';
+          root.style.position = prevRootPosition || '';
+        }
+        window.scrollTo(0, scrollY);
+      };
+    }
   }, [isOpen]);
   
   const [formData, setFormData] = useState({
