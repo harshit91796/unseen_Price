@@ -199,7 +199,13 @@ const Feed = () => {
     { name: 'Beauty', icon: '💄' },
     { name: 'Vehicles', icon: '🚗' },
     { name: 'Electronics', icon: '📱' },
-    { name: 'Foods', icon: '🍔' }
+    { name: 'Foods', icon: '🍔' },
+    { name: 'Medical & clinic', icon: '🏥' },
+    { name: 'Sports', icon: '🏆' },
+    { name: 'Education', icon: '📚' },
+    { name: 'Toys & Games', icon: '🎮' },
+    { name: 'Jewelry', icon: '💎' },
+    { name: 'Other Services', icon: '💡' },
   ];
 
   return (

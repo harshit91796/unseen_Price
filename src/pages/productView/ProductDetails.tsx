@@ -4,18 +4,20 @@ import ImageModal from '../../components/imageModal/ImageModal';
 import { 
   Star, 
   StarBorder, 
-  ShoppingCart, 
   LocalShipping, 
   Verified,
   LocalOffer,
   ArrowForward,
   AddShoppingCart,
   LocationOn,
-  Store
+  Store,
+  Edit
 } from '@mui/icons-material';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { getProductDetails, getAdvertisementNearby } from '../../Api';
+import { getProductDetails, getAdvertisementNearby, getShopDetails, updateProduct } from '../../Api';
 import { toast } from 'react-toastify';
+import { useSelector } from 'react-redux';
+import ProductEditModal from './edit modal/ProductEditModal';
 
 interface Advertisement {
   _id: string;
@@ -43,6 +45,7 @@ const ADS_PER_VIEW = 3;
 const ProductDetails: React.FC = () => {
   const navigate = useNavigate();
   const { productId } = useParams();
+  const currentUser = useSelector((state: any) => state.user);
   const [productDetails, setProductDetails] = useState<any>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +55,8 @@ const ProductDetails: React.FC = () => {
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [visibleAds, setVisibleAds] = useState<Advertisement[]>([]);
   const [userLocation, setUserLocation] = useState<any>(null);
+  const [shopDetails, setShopDetails] = useState<any>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     // Get user location from localStorage
@@ -96,7 +101,7 @@ const ProductDetails: React.FC = () => {
   useEffect(() => {
     if (advertisements.length > ADS_PER_VIEW) {
       const interval = setInterval(() => {
-        setVisibleAds(prev => {
+        setVisibleAds(() => {
           const firstAd = advertisements[0];
           const restAds = advertisements.slice(1);
           const newAds = [...restAds, firstAd];
@@ -129,6 +134,26 @@ const ProductDetails: React.FC = () => {
     }
   }, [productId]);
 
+  // Fetch shop details to determine if current user is the owner
+  useEffect(() => {
+    const fetchShop = async () => {
+      try {
+        if (!productDetails?.shopId) return;
+        const response = await getShopDetails(productDetails.shopId as string);
+        setShopDetails(response);
+      } catch (err) {
+        console.error('Failed to load shop details for product page', err);
+      }
+    };
+
+    fetchShop();
+  }, [productDetails?.shopId]);
+
+  const isOwner =
+    !!currentUser?.user?._id &&
+    !!shopDetails?.owner &&
+    currentUser.user._id === shopDetails.owner;
+
   const handleAddToCart = () => {
     if (!selectedSize) {
       toast.warning('Please select a size');
@@ -143,6 +168,23 @@ const ProductDetails: React.FC = () => {
       return;
     }
     // Implement buy now logic
+  };
+
+  const handleUpdateProduct = async (updatedData: any) => {
+    if (!productId) return;
+    try {
+      const updated = await updateProduct(productId as string, updatedData);
+      // Merge updated fields into local state (API may return full product or partial)
+      setProductDetails((prev: any) => ({
+        ...prev,
+        ...(updated || updatedData),
+      }));
+      toast.success('Product updated successfully');
+    } catch (err) {
+      console.error('Failed to update product', err);
+      toast.error('Failed to update product');
+      throw err;
+    }
   };
 
   if (loading) {
@@ -201,7 +243,18 @@ const ProductDetails: React.FC = () => {
           </div>
 
           <div className="product-header">
-            <h1>{productDetails.name}</h1>
+            <div className="product-header-top">
+              <h1>{productDetails.name}</h1>
+              {isOwner && (
+                <button
+                  className="product-edit-button"
+                  onClick={() => setIsEditModalOpen(true)}
+                  aria-label="Edit product"
+                >
+                  <Edit /> Edit
+                </button>
+              )}
+            </div>
             <div className="product-meta">
               <div className="rating">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -394,6 +447,16 @@ const ProductDetails: React.FC = () => {
           images={productDetails.images}
           initialIndex={selectedImageIndex}
           onClose={() => setSelectedImageIndex(null)}
+        />
+      )}
+
+      {/* Product Edit Modal - only visible to shop owner */}
+      {isOwner && (
+        <ProductEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          product={productDetails}
+          onUpdate={handleUpdateProduct}
         />
       )}
     </div>

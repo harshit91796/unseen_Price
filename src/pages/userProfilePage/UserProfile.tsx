@@ -6,7 +6,6 @@ import {
   Store, 
   Settings, 
   Analytics, 
-  LocationOn,
   Email,
   Phone,
   TrendingUp,
@@ -14,12 +13,14 @@ import {
   StoreMallDirectory,
   Category,
   CheckCircle,
-  Cancel
+  Cancel,
+  Delete
 } from '@mui/icons-material';
 import './UserProfile.css';
 import AddShopModal from './addShopModal/AddShopModal';
+import ConfirmationModal from '../../components/ConfirmationModal/ConfirmationModal';
 import { useSelector } from 'react-redux';
-import { createShop, getCategories, getUser } from '../../Api';
+import { createShop, getCategories, getUser, updateShop } from '../../Api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { uploadImagesToSupabase } from '../../services/service';
@@ -58,6 +59,7 @@ interface ShopData {
     image: string;
   };
   isActive: boolean;
+  isDeleted?: boolean;
   revenue?: string;
   orders?: number;
 }
@@ -70,6 +72,11 @@ const UserProfile = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; shopId: string | null; shopName: string }>({
+    isOpen: false,
+    shopId: null,
+    shopName: '',
+  });
   console.log("userData",userData);
 
   useEffect(() => {
@@ -134,6 +141,27 @@ const UserProfile = () => {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(value);
+  };
+
+  const handleDeleteShop = async () => {
+    if (!deleteConfirmModal.shopId) return;
+    
+    try {
+      await updateShop(deleteConfirmModal.shopId, { isDeleted: true });
+      toast.success('Shop deleted successfully');
+      // Refresh shops list
+      await getUserData();
+      setDeleteConfirmModal({ isOpen: false, shopId: null, shopName: '' });
+    } catch (error) {
+      console.error('Failed to delete shop', error);
+      toast.error('Failed to delete shop');
+    }
+  };
+
+  const openDeleteConfirm = (shopId: string, shopName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDeleteConfirmModal({ isOpen: true, shopId, shopName });
   };
 
   if (loading) {
@@ -234,42 +262,52 @@ const UserProfile = () => {
         </div>
 
         <div className="shops-grid">
-          {userData?.data.shops.map((shop) => (
-            <Link 
-              to={`/shop/${shop._id}`} 
-              key={shop._id} 
-              className="shop-card"
-            >
-              <div className={`shop-status ${shop.isActive ? 'active' : 'inactive'}`}>
-                {shop.isActive ? (
-                  <>
-                    <CheckCircle /> Active
-                  </>
-                ) : (
-                  <>
-                    <Cancel /> Inactive
-                  </>
-                )}
-              </div>
-              
-              <div className="shop-image">
-                {shop.images[0] ? (
-                  <img src={shop.images[0]} alt={shop.name} />
-                ) : (
-                  <Store className="placeholder-icon" />
-                )}
-              </div>
+          {userData?.data.shops
+            .filter((shop: ShopData) => shop.isDeleted !== true)
+            .map((shop: ShopData) => (
+            <div key={shop._id} className="shop-card-wrapper">
+              <Link 
+                to={`/shop/${shop._id}`} 
+                className="shop-card"
+              >
+                <div className={`shop-status ${shop.isActive ? 'active' : 'inactive'}`}>
+                  {shop.isActive ? (
+                    <>
+                      <CheckCircle /> Active
+                    </>
+                  ) : (
+                    <>
+                      <Cancel /> Inactive
+                    </>
+                  )}
+                </div>
+                
+                <div className="shop-image">
+                  {shop.images[0] ? (
+                    <img src={shop.images[0]} alt={shop.name} />
+                  ) : (
+                    <Store className="placeholder-icon" />
+                  )}
+                </div>
 
-              <div className="shop-info">
-                <div className="shop-title">
-                  <h3>{shop.name}</h3>
-                  <div className="shop-category">
-                    <Category />
-                    {shop.category.name}
+                <div className="shop-info">
+                  <div className="shop-title">
+                    <h3>{shop.name}</h3>
+                    <div className="shop-category">
+                      <Category />
+                      {shop.category.name}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+              <button
+                className="shop-delete-button"
+                onClick={(e) => openDeleteConfirm(shop._id, shop.name, e)}
+                aria-label={`Delete ${shop.name}`}
+              >
+                <Delete />
+              </button>
+            </div>
           ))}
 
           <button 
@@ -287,6 +325,17 @@ const UserProfile = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleAddShop}
         categories={categories}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteConfirmModal.isOpen}
+        onClose={() => setDeleteConfirmModal({ isOpen: false, shopId: null, shopName: '' })}
+        onConfirm={handleDeleteShop}
+        title="Delete Shop"
+        message={`Are you sure you want to delete "${deleteConfirmModal.shopName}"? This action cannot be undone.`}
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        type="danger"
       />
     </div>
   );

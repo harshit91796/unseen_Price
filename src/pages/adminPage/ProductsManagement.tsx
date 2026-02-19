@@ -17,7 +17,9 @@ interface Product {
   description: string;
   price: number;
   images: string[];
-  shop: ShopInfo;
+  shop?: ShopInfo;
+  /** Populated shop object from API (backend uses shopId) */
+  shopId?: ShopInfo & { address?: Record<string, string>; owner?: string };
   productCategory: string;
   genderCategory: string;
   stock: number;
@@ -413,7 +415,7 @@ const ProductsManagement: React.FC = () => {
                   </div>
                   <div className={styles.productDetailItem}>
                     <Store className={styles.detailIcon} />
-                    <span>{product.shop?.name || 'Unknown Shop'}</span>
+                    <span>{product.shop?.name || product.shopId?.name || 'Unknown Shop'}</span>
                   </div>
                   <div className={styles.productDetailItem}>
                     <span>Category: {product.productCategory || 'No category'}</span>

@@ -16,18 +16,17 @@ const PricingPage: React.FC = () => {
           <div className="card-header">
             <h2>Basic</h2>
             <div className="price">
-              <span className="currency">$</span>
-              <span className="amount">19</span>
-              <span className="period">/month</span>
+              <span className="currency">₹</span>
+              <span className="amount">999</span>
+              <span className="period">/3 Month</span>
             </div>
           </div>
           <div className="card-body">
             <ul>
-              <li><FaCheck className="check-icon" /> Up to 50 product listings</li>
-              <li><FaCheck className="check-icon" /> Basic analytics</li>
-              <li><FaCheck className="check-icon" /> Customer support</li>
+              <li><FaCheck className="check-icon" /> Add Up to 100 product listings</li>
+              <li><FaCheck className="check-icon" /> 1 Video promise for Promotion</li>
               <li><FaCheck className="check-icon" /> Basic shop customization</li>
-              <li><FaCheck className="check-icon" /> Standard processing</li>
+              <li><FaCheck className="check-icon" /> Add upto 5 shop</li>
             </ul>
             <button className="subscribe-btn">Get Started</button>
           </div>
@@ -39,31 +38,30 @@ const PricingPage: React.FC = () => {
           <div className="card-header">
             <h2>Professional</h2>
             <div className="price">
-              <span className="currency">$</span>
-              <span className="amount">49</span>
-              <span className="period">/month</span>
+              <span className="currency">₹</span>
+              <span className="amount">1999</span>
+              <span className="period">/3 Month</span>
             </div>
           </div>
           <div className="card-body">
             <ul>
               <li><FaCheck className="check-icon" /> Unlimited product listings</li>
-              <li><FaCheck className="check-icon" /> Advanced analytics</li>
+              <li><FaCheck className="check-icon" /> 3 Video promise for Promotion</li>
               <li><FaCheck className="check-icon" /> Priority customer support</li>
               <li><FaCheck className="check-icon" /> Advanced shop customization</li>
-              <li><FaCheck className="check-icon" /> Priority processing</li>
-              <li><FaCheck className="check-icon" /> Marketing tools</li>
+              <li><FaCheck className="check-icon" /> Add upto 10 shop</li>
             </ul>
             <button className="subscribe-btn featured-btn">Get Started</button>
           </div>
         </div>
 
         {/* Enterprise Plan */}
-        <div className="pricing-card">
+        {/* <div className="pricing-card">
           <div className="card-header">
             <h2>Enterprise</h2>
             <div className="price">
-              <span className="currency">$</span>
-              <span className="amount">99</span>
+              <span className="currency">₹</span>
+              <span className="amount">9999</span>
               <span className="period">/month</span>
             </div>
           </div>
@@ -78,7 +76,7 @@ const PricingPage: React.FC = () => {
             </ul>
             <button className="subscribe-btn">Get Started</button>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

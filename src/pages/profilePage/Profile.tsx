@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './profile.css';
-import { Edit, AccessTime, LocationOn, Phone, Category, Store } from '@mui/icons-material';
+import { Edit, AccessTime, LocationOn, Phone, Category, Store, Delete } from '@mui/icons-material';
 import { Link, useParams } from 'react-router-dom';
 // import { shopeImages } from '../../Pictures';
-import { getShopDetails, getShopProducts, updateShop } from '../../Api';
+import { getShopDetails, getShopProducts, updateShop, updateProduct } from '../../Api';
 import ShopEditModal from './edit modal/shopEditModal';
+import ConfirmationModal from '../../components/ConfirmationModal/ConfirmationModal';
 import { toast } from 'react-toastify';
 import { Slider } from '@mui/material';
 import { useSelector } from 'react-redux';
@@ -39,6 +40,11 @@ const Profile = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [itemsPerPage] = useState(12); // Show 12 products per page
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{ isOpen: boolean; productId: string | null; productName: string }>({
+    isOpen: false,
+    productId: null,
+    productName: '',
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -131,8 +137,11 @@ const Profile = () => {
       return;
     }
     
-    // Apply filters to all products
+    // Apply filters to all products (exclude deleted products)
     let allFilteredProducts = shopProducts.filter((product: any) => {
+      // Filter out deleted products
+      if (product.isDeleted === true) return false;
+      
       if (activeTab === 'mens' && product.genderCategory !== 'mens') return false;
       if (activeTab === 'womens' && product.genderCategory !== 'womens') return false;
       if (activeTab === 'childrens' && product.genderCategory !== 'childrens') return false;
@@ -242,6 +251,27 @@ const Profile = () => {
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
     setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deleteConfirmModal.productId) return;
+    
+    try {
+      await updateProduct(deleteConfirmModal.productId, { isDeleted: true });
+      toast.success('Product deleted successfully');
+      // Refresh products list
+      await ShopProducts(currentPage);
+      setDeleteConfirmModal({ isOpen: false, productId: null, productName: '' });
+    } catch (error) {
+      console.error('Failed to delete product', error);
+      toast.error('Failed to delete product');
+    }
+  };
+
+  const openDeleteConfirm = (productId: string, productName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDeleteConfirmModal({ isOpen: true, productId, productName });
   };
 
   return (
@@ -431,23 +461,33 @@ const Profile = () => {
             </div>
           ) : (
             filteredProducts?.map((product: any) => (
-              <Link 
-                key={product._id} 
-                to={`/productDetails/${product._id}`} 
-                className="product-card"
-              >
-                <div className="product-image-container">
-                  <img 
-                    src={product.images[0]} 
-                    alt={product.name} 
-                    className="product-image" 
-                  />
-                </div>
-                <div className="product-info">
-                  <h3>{product.name}</h3>
-                  <p className="product-price">${product.price}</p>
-                </div>
-              </Link>
+              <div key={product._id} className="product-card-wrapper">
+                <Link 
+                  to={`/productDetails/${product._id}`} 
+                  className="product-card"
+                >
+                  <div className="product-image-container">
+                    <img 
+                      src={product.images[0]} 
+                      alt={product.name} 
+                      className="product-image" 
+                    />
+                  </div>
+                  <div className="product-info">
+                    <h3>{product.name}</h3>
+                    <p className="product-price">₹ {product.price}</p>
+                  </div>
+                </Link>
+                {currentUser?.user?._id === shopDetails?.owner && (
+                  <button
+                    className="product-delete-button"
+                    onClick={(e) => openDeleteConfirm(product._id, product.name, e)}
+                    aria-label={`Delete ${product.name}`}
+                  >
+                    <Delete />
+                  </button>
+                )}
+              </div>
             ))
           )}
         </div>
@@ -544,6 +584,17 @@ const Profile = () => {
         onClose={() => setIsEditModalOpen(false)}
         shopDetails={shopDetails}
         onUpdate={handleUpdateShop}
+      />
+
+      <ConfirmationModal
+        isOpen={deleteConfirmModal.isOpen}
+        onClose={() => setDeleteConfirmModal({ isOpen: false, productId: null, productName: '' })}
+        onConfirm={handleDeleteProduct}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${deleteConfirmModal.productName}"? This action cannot be undone.`}
+        confirmText="Yes, Delete"
+        cancelText="Cancel"
+        type="danger"
       />
     </div>
   );

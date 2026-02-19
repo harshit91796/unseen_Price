@@ -3,6 +3,9 @@ import axios from 'axios';
 // Base URL for your API
 const API_BASE_URL = 'https://d31i0zfjth34gl.cloudfront.net/api'; 
 
+// Local URL for development
+// const API_BASE_URL = 'http://localhost:3000/api';
+
 // Create an axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -460,6 +463,16 @@ export const getProductDetails = async (productId: string) => {
   }
 };
 
+export const updateProduct = async (productId: string, updatedData: any) => {
+  try {
+    const response = await api.put(`/product/update-product/${productId}`, updatedData);
+    console.log('API updateProduct response:', response.data);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
 export const searchProducts = async (query: string) => {
   try {
     const response = await api.get(`/product/filter?${query}`);
@@ -693,6 +706,7 @@ export const updateProductStatus = async (productId: string, isActive: boolean) 
     throw error;
   }
 };
+
 
 export const deleteProduct = async (productId: string) => {
   try {
