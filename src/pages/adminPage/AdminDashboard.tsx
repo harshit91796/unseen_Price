@@ -40,11 +40,12 @@ interface Advertisement {
   };
   startDate: string;
   endDate: string;
-  state: string;
-  city: string;
-  status: 'active' | 'inactive';
+  state?: string;
+  city?: string;
+  status?: 'active' | 'inactive';
   isActive: boolean;
   isDeleted: boolean;
+  link?: string;
 }
 
 const menuItems: MenuItem[] = [
@@ -63,6 +64,7 @@ const AdminDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [showAdForm, setShowAdForm] = useState(false);
+  const [editingAd, setEditingAd] = useState<Advertisement | null>(null);
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [adSearchQuery, setAdSearchQuery] = useState('');
   const [showAdFilters, setShowAdFilters] = useState(false);
@@ -162,19 +164,30 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleEditAd = (id: string) => {
-    console.log('Edit ad with ID:', id);
+  const handleEditAd = (ad: Advertisement) => {
+    setEditingAd(ad);
+    setShowAdForm(true);
   };
 
   const handleDeleteAd = async (id: string) => {
-    console.log('Delete ad with ID:', id);
-    const response = await updateAdvertisement(id ,{isDeleted : true});
-    if(response){
+    try {
+      await updateAdvertisement(id, { isDeleted: true });
       toast.success('Advertisement deleted successfully');
       fetchAdvertisements();
-    }else{
+    } catch (err) {
       toast.error('Failed to delete advertisement');
     }
+  };
+
+  const handleAdFormClose = () => {
+    setShowAdForm(false);
+    setEditingAd(null);
+  };
+
+  const handleAdFormSuccess = () => {
+    setEditingAd(null);
+    setShowAdForm(false);
+    fetchAdvertisements();
   };
 
   const handleViewAd = async (id: string , isActive: boolean) => {
@@ -192,10 +205,6 @@ const AdminDashboard = () => {
     localStorage.removeItem('adminToken');
     await logout();
     navigate('/admin/login');
-  };
-
-  const handleAdFormSuccess = () => {
-    fetchAdvertisements();
   };
 
   const renderContent = () => {
@@ -400,7 +409,7 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <div className={styles.adActions}>
-                        <button className={styles.editButton} onClick={() => handleEditAd(ad._id)}><Edit /></button>
+                        <button className={styles.editButton} onClick={() => handleEditAd(ad)}><Edit /></button>
                         <button className={styles.deleteButton} onClick={() => handleDeleteAd(ad._id)}><Delete /></button>
                         <button className={styles.viewButton} onClick={() => handleViewAd(ad._id , ad.isActive)}>
                           {ad.isActive === true ? <Visibility /> : <VisibilityOff />}
@@ -416,7 +425,8 @@ const AdminDashboard = () => {
             </div>
             {showAdForm && (
               <AdvertiseForm 
-                onClose={() => setShowAdForm(false)}
+                initialAd={editingAd}
+                onClose={handleAdFormClose}
                 onSuccess={handleAdFormSuccess}
               />
             )}

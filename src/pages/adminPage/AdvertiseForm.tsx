@@ -1,12 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Close } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { fetchPlaceSuggestions } from '../../utils/opencage';
 import styles from './AdminDashboard.module.css';
-import { createAdvertisement } from '../../Api';
+import { createAdvertisement, updateAdvertisement } from '../../Api';
 import { uploadImagesToSupabase } from '../../services/service';
 
+/** When provided, form is in edit mode and will call update instead of create */
+export interface InitialAdForEdit {
+  _id: string;
+  title: string;
+  description: string;
+  images: string[];
+  targeting: {
+    coordinates: [number, number];
+    city: string;
+    state: string;
+    country: string;
+    radius: number;
+    targetType: 'CITY' | 'STATE' | 'GLOBAL';
+  };
+  startDate: string;
+  endDate: string;
+  link?: string;
+  isActive?: boolean;
+}
+
 interface AdvertiseFormProps {
+  initialAd?: InitialAdForEdit | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -73,7 +94,8 @@ const indianStates = [
   "West Bengal"
 ];
 
-const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ onClose, onSuccess }) => {
+const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ initialAd, onClose, onSuccess }) => {
+  const isEditMode = Boolean(initialAd?._id);
   const [locationQuery, setLocationQuery] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -95,6 +117,28 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ onClose, onSuccess }) => 
     isActive: true
   });
 
+  useEffect(() => {
+    if (!initialAd) return;
+    setAdFormData({
+      title: initialAd.title || '',
+      description: initialAd.description || '',
+      images: initialAd.images || [],
+      targeting: {
+        coordinates: initialAd.targeting?.coordinates ?? [0, 0],
+        city: initialAd.targeting?.city ?? '',
+        state: initialAd.targeting?.state ?? '',
+        country: initialAd.targeting?.country ?? '',
+        radius: initialAd.targeting?.radius ?? 100,
+        targetType: initialAd.targeting?.targetType ?? 'CITY'
+      },
+      startDate: initialAd.startDate ? initialAd.startDate.slice(0, 10) : '',
+      endDate: initialAd.endDate ? initialAd.endDate.slice(0, 10) : '',
+      link: initialAd.link ?? '',
+      isActive: initialAd.isActive ?? true
+    });
+    setUploadedImages(initialAd.images || []);
+  }, [initialAd]);
+
   const handleLocationSearch = async (query: string) => {
     setLocationQuery(query);
     if (query.length > 2) {
@@ -106,8 +150,7 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ onClose, onSuccess }) => 
   };
 
   const handleLocationSelect = (suggestion: LocationSuggestion) => {
-    console.log(suggestion);
-    const { city, state, country } = suggestion.formatted;
+    const { street, city, state, country } = suggestion.formatted;
     setAdFormData(prev => ({
       ...prev,
       targeting: {
@@ -121,7 +164,7 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ onClose, onSuccess }) => 
       }
     }));
     setLocationSuggestions([]);
-    setLocationQuery(suggestion.formatted);
+    setLocationQuery([street, city, state, country].filter(Boolean).join(', '));
   };
 
   const handleGlobalTargeting = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,49 +223,59 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ onClose, onSuccess }) => 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if(adFormData.title.length === 0){
+      if (adFormData.title.length === 0) {
         toast.error('Please enter a headline');
         return;
-      }else if(adFormData.description.length === 0){
+      }
+      if (adFormData.description.length === 0) {
         toast.error('Please enter a description');
         return;
-      }else if(adFormData.link.length === 0){
+      }
+      if (adFormData.link.length === 0) {
         toast.error('Please enter a destination url');
         return;
-      }else if(adFormData.startDate.length === 0){
+      }
+      if (adFormData.startDate.length === 0) {
         toast.error('Please enter a start date');
         return;
-      }else if(adFormData.endDate.length === 0){
+      }
+      if (adFormData.endDate.length === 0) {
         toast.error('Please enter an end date');
         return;
       }
-
-      if(uploadedImages.length === 0){
+      if (uploadedImages.length === 0) {
         toast.error('Please upload at least one image');
         return;
-      }else if(uploadedImages.length > 1){
+      }
+      if (uploadedImages.length > 1) {
         toast.error('Please upload only one image');
         return;
       }
 
-      // First upload images to Supabase and get the URLs
-      const uploadedImageUrls = await uploadImagesToSupabase(uploadedImages);
-      
-      // Create a new object with the uploaded image URLs
+      // Separate existing URLs from new blob URLs (need upload)
+      const existingUrls = uploadedImages.filter((src) => src.startsWith('http'));
+      const newBlobUrls = uploadedImages.filter((src) => !src.startsWith('http'));
+      const uploadedNewUrls = newBlobUrls.length > 0 ? await uploadImagesToSupabase(newBlobUrls) : [];
+      const finalImageUrls = [...existingUrls, ...uploadedNewUrls];
+
       const advertisementData = {
         ...adFormData,
-        images: uploadedImageUrls // Replace local blob URLs with Supabase URLs
+        images: finalImageUrls
       };
 
-      // Create the advertisement with the Supabase image URLs
-      await createAdvertisement(advertisementData);
-      
+      if (isEditMode && initialAd?._id) {
+        await updateAdvertisement(initialAd._id, advertisementData);
+        toast.success('Advertisement updated successfully');
+      } else {
+        await createAdvertisement(advertisementData);
+        toast.success('Advertisement created successfully');
+      }
+
       onSuccess();
       onClose();
-      toast.success('Advertisement created successfully');
     } catch (error) {
-      console.error('Error creating advertisement:', error);
-      toast.error('Failed to create advertisement');
+      console.error(isEditMode ? 'Error updating advertisement' : 'Error creating advertisement', error);
+      toast.error(isEditMode ? 'Failed to update advertisement' : 'Failed to create advertisement');
     }
   };
 
@@ -245,8 +298,8 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ onClose, onSuccess }) => 
           <div className={styles.formContainer}>
             <div className={styles.formHeader}>
               <div className={styles.formHeaderText}>
-                <p className={styles.formTitle}>Create Ad</p>
-                <p className={styles.formStep}>Step 1: Create ad</p>
+                <p className={styles.formTitle}>{isEditMode ? 'Edit Ad' : 'Create Ad'}</p>
+                <p className={styles.formStep}>Step 1: {isEditMode ? 'Edit ad' : 'Create ad'}</p>
               </div>
             </div>
 

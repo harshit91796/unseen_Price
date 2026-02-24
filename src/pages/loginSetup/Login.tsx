@@ -66,7 +66,7 @@ const Login: React.FC = () => {
   };
 
   const handleOAuthLogin = (provider: string) => {
-    window.location.href = `http://localhost:3007/api/auth/${provider}`;
+    window.location.href = `http://localhost:3000/api/auth/${provider}`;
 
     
   };

@@ -1,0 +1,126 @@
+.site-footer {
+  margin-top: auto;
+  background: var(--primary-color);
+  color: var(--text-light);
+  padding: 2.5rem 1.5rem 1rem;
+}
+
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-brand .footer-logo {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-light);
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.footer-brand .footer-logo:hover {
+  opacity: 0.9;
+}
+
+.footer-tagline {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 0.9;
+  max-width: 260px;
+}
+
+.footer-heading {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.95;
+  margin: 0 0 0.25rem 0;
+}
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-links a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease, padding-left 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: var(--text-light);
+}
+
+.footer-contact .footer-icon {
+  font-size: 1rem;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+  opacity: 0.9;
+}
+
+.footer-contact li {
+  display: flex;
+  align-items: center;
+}
+
+.footer-contact a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.footer-bottom {
+  padding-top: 1.25rem;
+  text-align: center;
+}
+
+.footer-copyright {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .footer-brand {
+    grid-column: 1;
+  }
+
+  .site-footer {
+    padding: 2rem 1rem 1rem;
+  }
+}

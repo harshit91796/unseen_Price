@@ -2,6 +2,7 @@ import React from 'react';
 import {  createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Navbar from "./components/navbar/Navbar";
+import Footer from "./components/footer/Footer";
 
 // import NickName from "./pages/initialSetup/NickName";
 import UploadAvatar from "./pages/initialSetup/UploadAvatar";
@@ -35,6 +36,9 @@ import ProductDetail from './pages/productView/ProductDetails';
 import YoutubeVideos from './pages/youtubeChannel/YoutubeVideos';
 import WishList from './pages/wishlist/WishList';
 import UserProfile from './pages/userProfilePage/UserProfile';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import TermsOfService from './pages/legal/TermsOfService';
+import CookiePolicy from './pages/legal/CookiePolicy';
 
 
 
@@ -48,13 +52,16 @@ const ProtectedRoute = ({ children, requireAuth }) => {
   return children ? children : <Outlet />;
 };
 
-// Create a root layout component
+// Create a root layout component (flex layout so footer stays at bottom when content is short)
 const RootLayout = () => {
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Navbar />
-      <Outlet />
-    </>
+      <main style={{ flex: 1 }}>
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
   );
 };
 
@@ -119,6 +126,18 @@ export const router = createBrowserRouter([
       {
         path: 'pricing',
         element: <PricingPage/>,
+      },
+      {
+        path: 'legal/privacy',
+        element: <PrivacyPolicy />,
+      },
+      {
+        path: 'legal/terms',
+        element: <TermsOfService />,
+      },
+      {
+        path: 'legal/cookies',
+        element: <CookiePolicy />,
       },
       {
         path: 'conversations',
