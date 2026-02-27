@@ -24,6 +24,8 @@ interface Shop {
     state: string;
     country: string;
   };
+  isActive?: boolean;
+  isDeleted?: boolean;
 }
 
 interface Product {
@@ -38,6 +40,8 @@ interface Product {
     name: string;
   };
   genderCategory: string;
+  isActive?: boolean;
+  isDeleted?: boolean;
 }
 
 interface PaginationInfo {
@@ -781,8 +785,15 @@ const SearchPage = () => {
           {loading ? (
             <div className="loading">Loading...</div>
           ) : searchType === 'shops' ? (
-            Array.isArray(searchResults.shops) && searchResults.shops.length > 0 ? (
-              searchResults.shops.map((shop) => (
+            Array.isArray(searchResults.shops) &&
+            searchResults.shops.filter(
+              (shop) => shop && shop.isDeleted !== true && shop.isActive !== false
+            ).length > 0 ? (
+              searchResults.shops
+                .filter(
+                  (shop) => shop && shop.isDeleted !== true && shop.isActive !== false
+                )
+                .map((shop) => (
                 <div key={shop._id} className="shop-card-search">
                   <div 
                     className="shop-favorite-search"
@@ -818,8 +829,17 @@ const SearchPage = () => {
             ) : (
               <div className="no-results">No shops found</div>
             )
-          ) : Array.isArray(searchResults.products) && searchResults.products.length > 0 ? (
-            searchResults.products.map((product) => (
+          ) : Array.isArray(searchResults.products) &&
+            searchResults.products.filter(
+              (product) =>
+                product && product.isDeleted !== true && product.isActive !== false
+            ).length > 0 ? (
+            searchResults.products
+              .filter(
+                (product) =>
+                  product && product.isDeleted !== true && product.isActive !== false
+              )
+              .map((product) => (
               <div key={product._id} className="product-card-search">
                 <div 
                   className="product-favorite-search"
@@ -851,7 +871,6 @@ const SearchPage = () => {
                       Distance unavailable
                     </p>
                   </div>
-                  
                 </Link>
               </div>
             ))

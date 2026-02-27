@@ -137,10 +137,11 @@ const Profile = () => {
       return;
     }
     
-    // Apply filters to all products (exclude deleted products)
+    // Apply filters to all products (exclude deleted or inactive products)
     let allFilteredProducts = shopProducts.filter((product: any) => {
-      // Filter out deleted products
+      // Filter out deleted or inactive products
       if (product.isDeleted === true) return false;
+      if (product.isActive === false) return false;
       
       if (activeTab === 'mens' && product.genderCategory !== 'mens') return false;
       if (activeTab === 'womens' && product.genderCategory !== 'womens') return false;
