@@ -1,12 +1,12 @@
 import axios from 'axios';
 
 // Base URL for your API
-// const API_BASE_URL = 'https://d31i0zfjth34gl.cloudfront.net/api'; 
+const API_BASE_URL = 'https://d5b9akbtsrkat.cloudfront.net/api'; 
 
 // Local URL for development
 // const API_BASE_URL = 'http://localhost:3000/api';
 
-const API_BASE_URL = 'http://unseenbackend-env.eba-zsxmdfw9.ap-south-1.elasticbeanstalk.com/api';
+// const API_BASE_URL = 'http://unseenbackend-env.eba-zsxmdfw9.ap-south-1.elasticbeanstalk.com/api';
 
 // Create an axios instance with default config
 const api = axios.create({
