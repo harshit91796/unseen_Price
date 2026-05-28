@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Edit, 
-  Add, 
-  Store, 
-  Settings, 
-  Analytics, 
+import {
+  Edit,
+  Add,
+  Store,
+  Settings,
+  Analytics,
   Email,
   Phone,
   TrendingUp,
@@ -14,7 +14,8 @@ import {
   Category,
   CheckCircle,
   Cancel,
-  Delete
+  Delete,
+  RoomService
 } from '@mui/icons-material';
 import './UserProfile.css';
 import AddShopModal from './addShopModal/AddShopModal';
@@ -24,6 +25,8 @@ import { createShop, getCategories, getUser, updateShop } from '../../Api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { uploadImagesToSupabase } from '../../services/service';
+import SafeImage from '../../components/SafeImage/SafeImage';
+import MySubscription from '../../components/MySubscription/MySubscription';
 
 interface UserData {
   data: {
@@ -39,6 +42,7 @@ interface UserData {
 interface ShopData {
   _id: string;
   name: string;
+  type?: 'shop' | 'service';
   description: string;
   address: { 
     street: string; 
@@ -109,28 +113,34 @@ const UserProfile = () => {
     }
   };
 
-  const handleAddShop = async (shopData: Omit<ShopData, '_id'>) => {
+  const handleAddShop = async (shopData: any) => {
     try {
-      console.log("shopData from modal",shopData);
-      if(shopData.images.length === 0){
-        console.log("No images uploaded");
+      console.log("shopData from modal", shopData);
+      if (shopData.images.length === 0) {
         toast.error('Please upload at least one image');
         return;
-      }else{
+      } else {
         const imagesArray = await uploadImagesToSupabase(shopData.images);
         shopData.images = imagesArray;
       }
-      
-      const data = await createShop(shopData);
-      if (data.success) {
-        toast.success(data.message);
-        setIsModalOpen(false);
-        getUserData(); // Refresh the shops list
-      } else {
-        toast.error(data.message);
+
+      const created = await createShop(shopData);
+      // Backend returns the saved Shop document directly
+      const isService = created?.type === 'service' || shopData.type === 'service';
+      const newId = created?._id;
+
+      toast.success(isService ? 'Service business created!' : 'Shop created!');
+      setIsModalOpen(false);
+      await getUserData();
+
+      // For service-type businesses, take the user straight to the Add Service form
+      // so they can immediately add their first offering
+      if (isService && newId) {
+        setTimeout(() => navigate(`/add-service/${newId}`), 600);
       }
     } catch (error) {
-      toast.error('Failed to create shop');
+      console.error('Failed to create business', error);
+      toast.error('Failed to create business');
     }
   };
 
@@ -179,10 +189,12 @@ const UserProfile = () => {
       <section className="profile-header">
         <div className="user-info">
           <div className="user-avatar">
-            <img 
-              src={user?.profilePic || "https://via.placeholder.com/100"} 
-              alt={userData?.data.user.name} 
+            <SafeImage
+              src={user?.profilePic}
+              alt={userData?.data.user.name || 'Profile'}
               className="profile-image"
+              preset="THUMB"
+              lazy={false}
             />
             <button onClick={()=> navigate('/setup/avatar')} className="edit-avatar-btn">
               <Edit />
@@ -228,19 +240,25 @@ const UserProfile = () => {
       {/* Navigation */}
       <nav className="profile-nav">
         <div className="nav-tabs">
-          <button 
+          <button
             className={`nav-tab ${activeTab === 'shops' ? 'active' : ''}`}
             onClick={() => setActiveTab('shops')}
           >
             <Store /> My Shops
           </button>
-          <button 
+          <button
+            className={`nav-tab ${activeTab === 'services' ? 'active' : ''}`}
+            onClick={() => setActiveTab('services')}
+          >
+            <RoomService /> My Services
+          </button>
+          <button
             className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
             onClick={() => setActiveTab('analytics')}
           >
             <Analytics /> Analytics
           </button>
-          <button 
+          <button
             className={`nav-tab ${activeTab === 'settings' ? 'active' : ''}`}
             onClick={() => setActiveTab('settings')}
           >
@@ -249,76 +267,81 @@ const UserProfile = () => {
         </div>
       </nav>
 
-      {/* Shops Grid */}
-      <section className="shops-section">
-        <div className="shops-header">
-          <h2>My Shops</h2>
-          <button 
-            className="add-shop-btn"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <Add /> Add New Shop
-          </button>
-        </div>
+      {/* Shops / Services Grid */}
+      {(activeTab === 'shops' || activeTab === 'services') && (() => {
+        const isServiceTab = activeTab === 'services';
+        const filteredItems = userData?.data.shops
+          .filter((s: ShopData) => s.isDeleted !== true)
+          .filter((s: ShopData) => isServiceTab ? s.type === 'service' : s.type !== 'service') || [];
 
-        <div className="shops-grid">
-          {userData?.data.shops
-            .filter((shop: ShopData) => shop.isDeleted !== true)
-            .map((shop: ShopData) => (
-            <div key={shop._id} className="shop-card-wrapper">
-              <Link 
-                to={`/shop/${shop._id}`} 
-                className="shop-card"
-              >
-                <div className={`shop-status ${shop.isActive ? 'active' : 'inactive'}`}>
-                  {shop.isActive ? (
-                    <>
-                      <CheckCircle /> Active
-                    </>
-                  ) : (
-                    <>
-                      <Cancel /> Inactive
-                    </>
-                  )}
-                </div>
-                
-                <div className="shop-image">
-                  {shop.images[0] ? (
-                    <img src={shop.images[0]} alt={shop.name} />
-                  ) : (
-                    <Store className="placeholder-icon" />
-                  )}
-                </div>
-
-                <div className="shop-info">
-                  <div className="shop-title">
-                    <h3>{shop.name}</h3>
-                    <div className="shop-category">
-                      <Category />
-                      {shop.category.name}
-                    </div>
-                  </div>
-                </div>
-              </Link>
+        return (
+          <section className="shops-section">
+            {!isServiceTab && <MySubscription />}
+            <div className="shops-header">
+              <h2>{isServiceTab ? 'My Services' : 'My Shops'}</h2>
               <button
-                className="shop-delete-button"
-                onClick={(e) => openDeleteConfirm(shop._id, shop.name, e)}
-                aria-label={`Delete ${shop.name}`}
+                className="add-shop-btn"
+                onClick={() => setIsModalOpen(true)}
               >
-                <Delete />
+                <Add /> Add New {isServiceTab ? 'Business' : 'Shop'}
               </button>
             </div>
-          ))}
 
-          <button 
-            className="add-shop-card"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <Add className="add-icon" />
-            <p>Add New Shop</p>
-          </button>
-        </div>
-      </section>
+            <div className="shops-grid">
+              {filteredItems.map((shop: ShopData) => (
+                <div key={shop._id} className="shop-card-wrapper">
+                  <Link to={`/shop/${shop._id}`} className="shop-card">
+                    <div className={`shop-status ${shop.isActive ? 'active' : 'inactive'}`}>
+                      {shop.isActive ? (<><CheckCircle /> Active</>) : (<><Cancel /> Inactive</>)}
+                    </div>
+
+                    <div className="shop-image">
+                      {shop.images[0] ? (
+                        <SafeImage src={shop.images[0]} alt={shop.name} preset="CARD" />
+                      ) : (
+                        shop.type === 'service' ? <RoomService className="placeholder-icon" /> : <Store className="placeholder-icon" />
+                      )}
+                    </div>
+
+                    <div className="shop-info">
+                      <div className="shop-title">
+                        <h3>{shop.name}</h3>
+                        <div className="shop-category">
+                          {shop.type === 'service' ? <RoomService /> : <Category />}
+                          {shop.category.name}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                  <button
+                    className="shop-delete-button"
+                    onClick={(e) => openDeleteConfirm(shop._id, shop.name, e)}
+                    aria-label={`Delete ${shop.name}`}
+                  >
+                    <Delete />
+                  </button>
+                </div>
+              ))}
+
+              <button
+                className="add-shop-card"
+                onClick={() => setIsModalOpen(true)}
+              >
+                <Add className="add-icon" />
+                <p>Add New {isServiceTab ? 'Business' : 'Shop'}</p>
+              </button>
+            </div>
+
+            {filteredItems.length === 0 && (
+              <p style={{ textAlign: 'center', color: '#9ca3af', marginTop: '2rem' }}>
+                {isServiceTab
+                  ? "You haven't added any services yet. Click 'Add New Business' to create your first service-type business."
+                  : "You haven't added any shops yet."}
+              </p>
+            )}
+          </section>
+        );
+      })()}
 
       <AddShopModal
         isOpen={isModalOpen}

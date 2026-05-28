@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import './searchPage.css';
-import { Search, FilterList, Favorite, FavoriteBorder, Store, ShoppingBag, LocationOn } from '@mui/icons-material';
-import { searchShops, searchProducts, addToWishlist, removeFromWishlist, getWishlist, getAdvertisementNearby, getCategories } from '../../Api';
+import { Search, FilterList, Favorite, FavoriteBorder, Store, ShoppingBag, LocationOn, MyLocation, LocationOff, RoomService, Schedule, EventAvailable } from '@mui/icons-material';
+import SafeImage from '../../components/SafeImage/SafeImage';
+import StarRating from '../../components/Reviews/StarRating';
+import PriceDisplay from '../../components/Price/PriceDisplay';
+import StockBadge from '../../components/Price/StockBadge';
+import { searchShops, searchProducts, searchServices, addToWishlist, removeFromWishlist, getWishlist, getAdvertisementNearby, getCategories } from '../../Api';
 import { toast } from 'react-toastify';
 import { Slider } from '@mui/material';
 import { calculateDistance, formatDistance } from '../../utils/distance';
@@ -24,6 +28,8 @@ interface Shop {
     state: string;
     country: string;
   };
+  rating?: number;
+  reviewCount?: number;
   isActive?: boolean;
   isDeleted?: boolean;
 }
@@ -33,6 +39,11 @@ interface Product {
   name: string;
   images: string[];
   price: number;
+  mrp?: number | null;
+  stock?: number;
+  isAvailable?: boolean;
+  sizes?: string[];
+  colors?: string[];
   shop: {
     name: string;
   };
@@ -40,6 +51,8 @@ interface Product {
     name: string;
   };
   genderCategory: string;
+  rating?: number;
+  reviewCount?: number;
   isActive?: boolean;
   isDeleted?: boolean;
 }
@@ -53,9 +66,31 @@ interface PaginationInfo {
   hasPrevPage: boolean;
 }
 
+interface ServiceOffering {
+  _id: string;
+  name: string;
+  description: string;
+  images: string[];
+  price: number;
+  mrp?: number | null;
+  priceType: string;
+  duration?: string;
+  serviceType: string;
+  category?: string;
+  bookingRequired?: boolean;
+  rating?: number;
+  reviewCount?: number;
+  isAvailable?: boolean;
+  isActive?: boolean;
+  isDeleted?: boolean;
+  shopId?: { _id: string; name: string; address?: any } | string;
+  targeting?: { coordinates: [number, number] };
+}
+
 interface SearchResults {
   shops: Shop[];
   products: Product[];
+  services: ServiceOffering[];
 }
 
 
@@ -88,10 +123,11 @@ const SearchPage = () => {
   const catogoryParams = useParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [searchType, setSearchType] = useState<'shops' | 'products'>('shops');
+  const [searchType, setSearchType] = useState<'shops' | 'products' | 'services'>('shops');
   const [searchResults, setSearchResults] = useState<SearchResults>({
     shops: [],
-    products: []
+    products: [],
+    services: []
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
@@ -103,7 +139,9 @@ const SearchPage = () => {
     gender: '',
     minPrice: '',
     maxPrice: '',
-    sortBy: ''
+    sortBy: '',
+    serviceType: '',
+    bookingRequired: ''
   });
   const [leftAds, setLeftAds] = useState<Advertisement[]>([]);
   const [rightAds, setRightAds] = useState<Advertisement[]>([]);
@@ -117,6 +155,15 @@ const SearchPage = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [category, setCategory] = useState<any[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+  // Radius search state — persisted in localStorage
+  const [searchRadius, setSearchRadius] = useState<number>(() => {
+    try { return parseInt(localStorage.getItem('searchRadius') || '15') || 15; } catch { return 15; }
+  });
+  const [radiusEnabled, setRadiusEnabled] = useState<boolean>(() => {
+    try { return localStorage.getItem('radiusEnabled') !== 'false'; } catch { return true; }
+  });
+  const [citySearch, setCitySearch] = useState('');
 
   const ADS_PER_VIEW = 3;
   const ROTATION_INTERVAL = 5000; // 5 seconds
@@ -150,10 +197,21 @@ const SearchPage = () => {
     }
   }, []);
 
-  // Separate useEffect for fetching ads when userLocation changes
+  // Sync URL category param into the filter dropdown so manual search uses it too
+  useEffect(() => {
+    const urlCat = catogoryParams.category;
+    if (urlCat && urlCat !== 'all') {
+      setFilters(prev => ({ ...prev, category: urlCat }));
+    } else {
+      setFilters(prev => ({ ...prev, category: '' }));
+    }
+  }, [catogoryParams.category]);
+
+  // Re-fetch ads when location OR active category changes (so ads match what user is browsing)
   useEffect(() => {
     fetchAdvertisements();
-  }, [userLocation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLocation, filters.category, catogoryParams.category]);
 
   // Rotate ads
   useEffect(() => {
@@ -192,6 +250,19 @@ const SearchPage = () => {
     setVisibleRightAds(rightAds.slice(0, ADS_PER_VIEW));
   }, [leftAds, rightAds]);
 
+  // Persist radius settings to localStorage
+  useEffect(() => {
+    localStorage.setItem('searchRadius', String(searchRadius));
+    localStorage.setItem('radiusEnabled', String(radiusEnabled));
+  }, [searchRadius, radiusEnabled]);
+
+  // Debounced city search — when user types a city in "By City" mode, wait 500ms then re-trigger initial search
+  const [debouncedCity, setDebouncedCity] = useState(citySearch);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedCity(citySearch), 500);
+    return () => clearTimeout(timer);
+  }, [citySearch]);
+
   const fetchWishlistData = async () => {
     try {
       const response = await getWishlist();
@@ -227,11 +298,15 @@ const SearchPage = () => {
 
   const fetchAdvertisements = async () => {
     try {
+      // Use the active category (URL param or filter dropdown) so ads match what user is browsing
+      const adCategory = filters.category
+        || (catogoryParams.category && catogoryParams.category !== 'all' ? catogoryParams.category : undefined);
       const ads = await getAdvertisementNearby({
         longitude: userLocation?.coordinates?.longitude,
         latitude: userLocation?.coordinates?.latitude,
         state: userLocation?.state,
         city: userLocation?.city,
+        category: adCategory,
       });
 
       const activeAds = (Array.isArray(ads) ? ads : []).filter((ad: Advertisement) => {
@@ -290,7 +365,12 @@ const SearchPage = () => {
       e.preventDefault();
     }
 
-    if (!searchQuery.trim() && !filters.category && !filters.gender && !filters.minPrice && !filters.maxPrice) {
+    // Allow empty search if user has at least a location filter (radius or city) or category param —
+    // common case: "show me everything near me"
+    const hasLocationFilter = (radiusEnabled && userLocation?.coordinates) || (!radiusEnabled && citySearch.trim());
+    const hasAnyFilter = filters.category || filters.gender || filters.minPrice || filters.maxPrice
+      || filters.serviceType || filters.bookingRequired;
+    if (!searchQuery.trim() && !hasAnyFilter && !hasLocationFilter && !catogoryParams.category) {
       toast.warning('Please enter a search term or select filters');
       return;
     }
@@ -309,6 +389,14 @@ const SearchPage = () => {
         }
         if (filters.sortBy) {
           queryParams.append('sort', filters.sortBy);
+        }
+        // Pass user coordinates for radius-based search
+        if (radiusEnabled && userLocation?.coordinates?.longitude && userLocation?.coordinates?.latitude) {
+          queryParams.append('longitude', String(userLocation.coordinates.longitude));
+          queryParams.append('latitude', String(userLocation.coordinates.latitude));
+          queryParams.append('radius', String(searchRadius));
+        } else if (!radiusEnabled && citySearch.trim()) {
+          queryParams.append('city', citySearch.trim());
         }
         // Add pagination parameters
         queryParams.append('page', currentPage.toString());
@@ -336,7 +424,7 @@ const SearchPage = () => {
         
         setSearchResults(prev => ({ ...prev, shops: shopResults }));
         setPagination(paginationInfo);
-      } else {
+      } else if (searchType === 'products') {
         const queryParams = new URLSearchParams();
         if (searchQuery.trim()) {
           queryParams.append('name', searchQuery);
@@ -361,6 +449,14 @@ const SearchPage = () => {
         }
         if(filters.gender && filters.gender == 'All'){
           queryParams.append('genderCategory', '');
+        }
+        // Pass user coordinates for radius-based search
+        if (radiusEnabled && userLocation?.coordinates?.longitude && userLocation?.coordinates?.latitude) {
+          queryParams.append('longitude', String(userLocation.coordinates.longitude));
+          queryParams.append('latitude', String(userLocation.coordinates.latitude));
+          queryParams.append('radius', String(searchRadius));
+        } else if (!radiusEnabled && citySearch.trim()) {
+          queryParams.append('location', citySearch.trim());
         }
         // Add pagination parameters
         queryParams.append('page', currentPage.toString());
@@ -388,6 +484,36 @@ const SearchPage = () => {
         
         setSearchResults(prev => ({ ...prev, products: productResults }));
         setPagination(paginationInfo);
+      } else if (searchType === 'services') {
+        const queryParams = new URLSearchParams();
+        if (searchQuery.trim()) queryParams.append('name', searchQuery);
+        if (filters.category && filters.category !== 'All Categories') queryParams.append('category', filters.category);
+        if (filters.serviceType) queryParams.append('serviceType', filters.serviceType);
+        if (filters.minPrice) queryParams.append('minPrice', filters.minPrice);
+        if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice);
+        if (filters.bookingRequired) queryParams.append('bookingRequired', filters.bookingRequired);
+        if (filters.sortBy) queryParams.append('sort', filters.sortBy);
+        if (radiusEnabled && userLocation?.coordinates?.longitude && userLocation?.coordinates?.latitude) {
+          queryParams.append('longitude', String(userLocation.coordinates.longitude));
+          queryParams.append('latitude', String(userLocation.coordinates.latitude));
+          queryParams.append('radius', String(searchRadius));
+        } else if (!radiusEnabled && citySearch.trim()) {
+          queryParams.append('location', citySearch.trim());
+        }
+        queryParams.append('page', currentPage.toString());
+        queryParams.append('limit', itemsPerPage.toString());
+
+        const response = await searchServices(queryParams.toString());
+        let serviceResults: ServiceOffering[] = [];
+        let paginationInfo: PaginationInfo | null = null;
+        if (Array.isArray(response)) {
+          serviceResults = response;
+        } else if (response?.data && Array.isArray(response.data)) {
+          serviceResults = response.data;
+          paginationInfo = response.pagination;
+        }
+        setSearchResults(prev => ({ ...prev, services: serviceResults }));
+        setPagination(paginationInfo);
       }
     } catch (error: any) {
       console.error('Search error:', error);
@@ -397,7 +523,7 @@ const SearchPage = () => {
         toast.error('Failed to fetch search results');
       }
       // Set empty results on error
-      setSearchResults({ shops: [], products: [] });
+      setSearchResults({ shops: [], products: [], services: [] });
     } finally {
       setLoading(false);
     }
@@ -409,10 +535,9 @@ const SearchPage = () => {
       ...prev,
       [name]: value
     }));
-    // Reset to page 1 when filters change
     setCurrentPage(1);
-    // Trigger search when filters change
-    handleSearch();
+    // Don't call handleSearch() here — it reads stale state. The performInitialSearch
+    // useEffect handles re-fetching when filters change (filter values are in its deps).
   };
 
   const handleGenderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -421,10 +546,7 @@ const SearchPage = () => {
       ...prev,
       gender: value
     }));
-    // Reset to page 1 when gender changes
     setCurrentPage(1);
-    // Trigger search when gender changes
-    handleSearch();
   };
 
   const handlePriceChange = (_event: Event, newValue: number | number[]) => {
@@ -454,8 +576,31 @@ const SearchPage = () => {
         return;
       }
 
-      const baseQuery = catogoryParams.category === 'all' ? '' : `category=${catogoryParams.category}`;
-      const queryString = baseQuery + (baseQuery ? '&' : '') + `page=${currentPage}&limit=${itemsPerPage}`;
+      // Effective category: prefer the user's dropdown choice; fall back to URL param
+      const effectiveCategory = filters.category
+        || (catogoryParams.category && catogoryParams.category !== 'all' ? catogoryParams.category : '');
+      const parts: string[] = [];
+      if (effectiveCategory) parts.push(`category=${encodeURIComponent(effectiveCategory)}`);
+      if (searchType === 'products' && filters.gender) parts.push(`genderCategory=${encodeURIComponent(filters.gender)}`);
+      if (searchType === 'services' && filters.serviceType) parts.push(`serviceType=${encodeURIComponent(filters.serviceType)}`);
+      if (searchType === 'services' && filters.bookingRequired) parts.push(`bookingRequired=${encodeURIComponent(filters.bookingRequired)}`);
+      if (filters.minPrice) parts.push(`minPrice=${encodeURIComponent(filters.minPrice)}`);
+      if (filters.maxPrice) parts.push(`maxPrice=${encodeURIComponent(filters.maxPrice)}`);
+
+      const storedLoc = (() => { try { return JSON.parse(localStorage.getItem('userLocation') || ''); } catch { return null; } })();
+      // For services/products tabs, the backend uses "location" param (not "city"). Shops use "city".
+      const cityParamName = searchType === 'shops' ? 'city' : 'location';
+      if (radiusEnabled && storedLoc?.coordinates?.longitude && storedLoc?.coordinates?.latitude) {
+        parts.push(`longitude=${storedLoc.coordinates.longitude}`);
+        parts.push(`latitude=${storedLoc.coordinates.latitude}`);
+        parts.push(`radius=${searchRadius}`);
+      } else if (!radiusEnabled && debouncedCity.trim()) {
+        parts.push(`${cityParamName}=${encodeURIComponent(debouncedCity.trim())}`);
+      }
+      parts.push(`page=${currentPage}`);
+      parts.push(`limit=${itemsPerPage}`);
+
+      const queryString = parts.join('&');
       console.log('Query string:', queryString);
 
       try {
@@ -478,22 +623,36 @@ const SearchPage = () => {
           console.log('Initial processed shop results:', shopResults);
           setSearchResults(prev => ({ ...prev, shops: shopResults }));
           setPagination(paginationInfo);
+        } else if (searchType === 'services') {
+          console.log('Searching for services...');
+          const response = await searchServices(queryString);
+          let serviceResults: ServiceOffering[] = [];
+          let paginationInfo: PaginationInfo | null = null;
+
+          if (Array.isArray(response)) {
+            serviceResults = response;
+          } else if (response?.data && Array.isArray(response.data)) {
+            serviceResults = response.data;
+            paginationInfo = response.pagination;
+          }
+          setSearchResults(prev => ({ ...prev, services: serviceResults }));
+          setPagination(paginationInfo);
         } else {
           console.log('Searching for products...');
           const response = await searchProducts(queryString);
           console.log('Initial product search response:', response);
-          
+
           // Handle both old format (array) and new format (paginated object)
           let productResults: Product[] = [];
           let paginationInfo: PaginationInfo | null = null;
-          
+
           if (Array.isArray(response)) {
             productResults = response;
           } else if (response?.data && Array.isArray(response.data)) {
             productResults = response.data;
             paginationInfo = response.pagination;
           }
-          
+
           console.log('Initial processed product results:', productResults);
           setSearchResults(prev => ({ ...prev, products: productResults }));
           setPagination(paginationInfo);
@@ -508,6 +667,8 @@ const SearchPage = () => {
         // Set empty results on error
         if (searchType === 'shops') {
           setSearchResults(prev => ({ ...prev, shops: [] }));
+        } else if (searchType === 'services') {
+          setSearchResults(prev => ({ ...prev, services: [] }));
         } else {
           setSearchResults(prev => ({ ...prev, products: [] }));
         }
@@ -515,7 +676,21 @@ const SearchPage = () => {
     };
 
     performInitialSearch();
-  }, [searchType, catogoryParams.category, currentPage, itemsPerPage]);
+  }, [
+    searchType,
+    catogoryParams.category,
+    currentPage,
+    itemsPerPage,
+    searchRadius,
+    radiusEnabled,
+    debouncedCity,
+    filters.category,
+    filters.gender,
+    filters.serviceType,
+    filters.bookingRequired,
+    filters.minPrice,
+    filters.maxPrice
+  ]);
 
   // Debug effect to log search results changes
   useEffect(() => {
@@ -551,10 +726,11 @@ const SearchPage = () => {
                 rel="noopener noreferrer"
                 className="vertical-ad-card"
               >
-                <img 
-                  src={ad.images?.[0] || 'https://via.placeholder.com/300x400?text=Promo'} 
-                  alt={ad.title || 'Promotion'} 
+                <SafeImage
+                  src={ad.images?.[0]}
+                  alt={ad.title || 'Promotion'}
                   className="vertical-ad-image"
+                  preset="AD"
                 />
                 <div className="vertical-ad-content">
                   <div>
@@ -594,7 +770,7 @@ const SearchPage = () => {
             >
               <Store /> Shops
             </button>
-            <button 
+            <button
               className={`toggle-btn ${searchType === 'products' ? 'active' : ''}`}
               onClick={() => {
                 setSearchType('products');
@@ -602,6 +778,15 @@ const SearchPage = () => {
               }}
             >
               <ShoppingBag /> Products
+            </button>
+            <button
+              className={`toggle-btn ${searchType === 'services' ? 'active' : ''}`}
+              onClick={() => {
+                setSearchType('services');
+                setCurrentPage(1);
+              }}
+            >
+              <RoomService /> Services
             </button>
           </div>
 
@@ -665,7 +850,54 @@ const SearchPage = () => {
                 </div>
               )}
 
-              {searchType === 'products' && <div className="filter-group">
+              {searchType === 'services' && (
+                <>
+                  <div className="filter-group">
+                    <h3>Service Type</h3>
+                    <select
+                      name="serviceType"
+                      className="filter-select"
+                      value={filters.serviceType}
+                      onChange={handleFilterChange}
+                    >
+                      <option value="">All Types</option>
+                      <option value="restaurant">Restaurant</option>
+                      <option value="cafe">Cafe</option>
+                      <option value="catering">Catering</option>
+                      <option value="salon">Salon</option>
+                      <option value="spa">Spa</option>
+                      <option value="parlour">Parlour</option>
+                      <option value="clinic">Clinic</option>
+                      <option value="dental">Dental</option>
+                      <option value="hotel">Hotel</option>
+                      <option value="guest-house">Guest House</option>
+                      <option value="gym">Gym</option>
+                      <option value="yoga">Yoga</option>
+                      <option value="tutoring">Tutoring</option>
+                      <option value="photography">Photography</option>
+                      <option value="plumber">Plumber</option>
+                      <option value="electrician">Electrician</option>
+                      <option value="laundry">Laundry</option>
+                    </select>
+                  </div>
+
+                  <div className="filter-group">
+                    <h3>Booking</h3>
+                    <select
+                      name="bookingRequired"
+                      className="filter-select"
+                      value={filters.bookingRequired}
+                      onChange={handleFilterChange}
+                    >
+                      <option value="">All</option>
+                      <option value="true">Booking Required</option>
+                      <option value="false">Walk-in OK</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {(searchType === 'products' || searchType === 'services') && <div className="filter-group">
                 <h3>Price Range</h3>
                 <div className="price-range-slider">
                   <Slider
@@ -708,6 +940,77 @@ const SearchPage = () => {
                     </>
                   )}
                 </select>
+              </div>
+
+              {/* Radius Filter — only shown when user has location */}
+              <div className="filter-group radius-filter-group">
+                <div className="radius-filter-header">
+                  <h3>
+                    {radiusEnabled ? <MyLocation fontSize="small" /> : <LocationOff fontSize="small" />}
+                    Search Area
+                  </h3>
+                  <button
+                    type="button"
+                    className={`radius-mode-toggle ${!radiusEnabled ? 'city-mode' : ''}`}
+                    onClick={() => { setRadiusEnabled(r => !r); setCurrentPage(1); }}
+                  >
+                    {radiusEnabled ? 'Near Me' : 'By City'}
+                  </button>
+                </div>
+
+                {radiusEnabled ? (
+                  userLocation?.coordinates ? (
+                    <>
+                      <div className="radius-value-display">
+                        <span className="radius-km">{searchRadius} km</span>
+                        <span className="radius-label">from your location</span>
+                      </div>
+                      <div className="radius-slider-wrap">
+                        <Slider
+                          value={searchRadius}
+                          onChange={(_e, v) => setSearchRadius(v as number)}
+                          onChangeCommitted={() => setCurrentPage(1)}
+                          min={2}
+                          max={100}
+                          step={1}
+                          valueLabelDisplay="auto"
+                          valueLabelFormat={(v) => `${v} km`}
+                        />
+                        <div className="radius-slider-labels">
+                          <span>2 km</span>
+                          <span>100 km</span>
+                        </div>
+                      </div>
+                      <div className="radius-presets">
+                        {[5, 10, 15, 25, 50].map(r => (
+                          <button
+                            key={r}
+                            type="button"
+                            className={`radius-preset-chip ${searchRadius === r ? 'active' : ''}`}
+                            onClick={() => { setSearchRadius(r); setCurrentPage(1); }}
+                          >
+                            {r} km
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="radius-no-location">
+                      <LocationOff fontSize="small" /> Location not available. Allow location access or switch to City mode.
+                    </p>
+                  )
+                ) : (
+                  <div className="city-search-input-wrap">
+                    <LocationOn fontSize="small" className="city-input-icon" />
+                    <input
+                      type="text"
+                      className="city-search-input"
+                      placeholder="Enter city name..."
+                      value={citySearch}
+                      onChange={(e) => { setCitySearch(e.target.value); setCurrentPage(1); }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -772,7 +1075,7 @@ const SearchPage = () => {
                 <button 
                   className="debug-button"
                   onClick={() => {
-                    setSearchResults({ shops: [], products: [] });
+                    setSearchResults({ shops: [], products: [], services: [] });
                     toast.info('Search results cleared');
                   }}
                 >
@@ -809,13 +1112,22 @@ const SearchPage = () => {
                     )}
                   </div>
                   <Link to={`/shop/${shop._id}`}>
-                    <img 
-                      src={shop.images?.[0] || 'https://via.placeholder.com/300'} 
-                      alt={shop.name} 
-                      className="shop-image-search" 
+                    <SafeImage
+                      src={shop.images?.[0]}
+                      alt={shop.name}
+                      className="shop-image-search"
+                      preset="CARD"
                     />
                     <div className="shop-info-search">
                       <h3>{shop.name}</h3>
+                      {(shop.reviewCount ?? 0) > 0 && (
+                        <p style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', margin: '0 0 0.3rem 0' }}>
+                          <StarRating value={shop.rating || 0} size={14} />
+                          <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                            {(shop.rating || 0).toFixed(1)} ({shop.reviewCount})
+                          </span>
+                        </p>
+                      )}
                       <p>{shop.category?.name || 'No category'}</p>
                       <p>{shop.address ? `${shop.address.city}, ${shop.address.state}` : 'No address'}</p>
                       <p className="shop-distance">
@@ -828,6 +1140,72 @@ const SearchPage = () => {
               ))
             ) : (
               <div className="no-results">No shops found</div>
+            )
+          ) : searchType === 'services' ? (
+            Array.isArray(searchResults.services) &&
+            searchResults.services.filter(
+              (s) => s && s.isDeleted !== true && s.isActive !== false
+            ).length > 0 ? (
+              searchResults.services
+                .filter((s) => s && s.isDeleted !== true && s.isActive !== false)
+                .map((service) => {
+                  const priceLabelMap: Record<string, string> = {
+                    fixed: '',
+                    starting_from: 'Starting from',
+                    per_hour: '/ hr',
+                    per_night: '/ night',
+                    per_session: '/ session',
+                    per_person: '/ person'
+                  };
+                  const priceLabel = priceLabelMap[service.priceType] || '';
+                  return (
+                    <div key={service._id} className="service-card-search">
+                      <Link to={`/serviceDetails/${service._id}`}>
+                        <SafeImage
+                          src={service.images?.[0]}
+                          alt={service.name}
+                          className="service-image-search"
+                          preset="CARD"
+                        />
+                        {service.bookingRequired && (
+                          <span className="service-booking-tag">
+                            <EventAvailable fontSize="small" /> Book
+                          </span>
+                        )}
+                        <div className="service-info-search">
+                          <span className="service-type-mini">{service.serviceType?.replace('-', ' ')}</span>
+                          <h3>{service.name}</h3>
+                          {(service.reviewCount ?? 0) > 0 && (
+                            <p style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', margin: '0 0 0.3rem 0' }}>
+                              <StarRating value={service.rating || 0} size={14} />
+                              <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                                {(service.rating || 0).toFixed(1)} ({service.reviewCount})
+                              </span>
+                            </p>
+                          )}
+                          <div style={{ margin: '0 0 0.4rem 0' }}>
+                            <PriceDisplay
+                              price={service.price}
+                              mrp={service.mrp}
+                              variant="card"
+                              suffix={service.priceType !== 'fixed' && service.priceType !== 'starting_from' ? priceLabel : undefined}
+                            />
+                          </div>
+                          {service.duration && (
+                            <p className="service-duration-mini">
+                              <Schedule fontSize="small" /> {service.duration}
+                            </p>
+                          )}
+                          <p className="service-shop-mini">
+                            {typeof service.shopId === 'object' ? service.shopId?.name : ''}
+                          </p>
+                        </div>
+                      </Link>
+                    </div>
+                  );
+                })
+            ) : (
+              <div className="no-results">No services found</div>
             )
           ) : Array.isArray(searchResults.products) &&
             searchResults.products.filter(
@@ -855,14 +1233,28 @@ const SearchPage = () => {
                   )}
                 </div>
                 <Link to={`/productDetails/${product._id}`}>
-                  <img 
-                    src={product.images?.[0] || 'https://via.placeholder.com/300'} 
-                    alt={product.name} 
-                    className="product-image-search" 
+                  <SafeImage
+                    src={product.images?.[0]}
+                    alt={product.name}
+                    className="product-image-search"
+                    preset="CARD"
                   />
                   <div className="product-info-search">
                     <h3>{product.name}</h3>
-                    <p className="product-price">₹{product.price}</p>
+                    <div style={{ margin: '0 0 0.5rem 0' }}>
+                      <PriceDisplay price={product.price} mrp={product.mrp} variant="card" />
+                    </div>
+                    <div style={{ margin: '0 0 0.4rem 0' }}>
+                      <StockBadge stock={product.stock} isAvailable={product.isAvailable} />
+                    </div>
+                    {(product.reviewCount ?? 0) > 0 && (
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', margin: '0 0 0.3rem 0' }}>
+                        <StarRating value={product.rating || 0} size={14} />
+                        <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                          {(product.rating || 0).toFixed(1)} ({product.reviewCount})
+                        </span>
+                      </p>
+                    )}
                     <p className="product-shop">{product.shop?.name || 'Unknown Shop'}</p>
                     <p className="product-category">{product.category?.name || 'No category'}</p>
                     <p className="product-gender">{product.genderCategory || 'No gender'}</p>
@@ -978,10 +1370,11 @@ const SearchPage = () => {
                 rel="noopener noreferrer"
                 className="vertical-ad-card"
               >
-                <img 
-                  src={ad.images?.[0] || 'https://via.placeholder.com/300x400?text=Promo'} 
-                  alt={ad.title || 'Promotion'} 
+                <SafeImage
+                  src={ad.images?.[0]}
+                  alt={ad.title || 'Promotion'}
                   className="vertical-ad-image"
+                  preset="AD"
                 />
                 <div className="vertical-ad-content">
                   <div>

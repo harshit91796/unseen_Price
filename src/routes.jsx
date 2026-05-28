@@ -29,16 +29,20 @@ import DirectMessagePage from "./pages/conversationSetep/DirectMessagePage";
 // import ConvoPage from "./pages/conversationSetep/dummy page/ConvoPage";
 // import ChatPage from "./pages/conversationSetep/dummy page/Chat";
 import Register from "./pages/loginSetup/Register";
+import VerifyEmail from "./pages/loginSetup/VerifyEmail";
 import SearchPage from './pages/searchPage/SearchPage';
 import Profile from './pages/profilePage/Profile';
 import AddNewProduct from './pages/addProduct/AddNewProduct';
+import AddService from './pages/addService/AddService';
 import ProductDetail from './pages/productView/ProductDetails';
+import ServiceDetail from './pages/serviceView/ServiceDetail';
 import YoutubeVideos from './pages/youtubeChannel/YoutubeVideos';
 import WishList from './pages/wishlist/WishList';
 import UserProfile from './pages/userProfilePage/UserProfile';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import TermsOfService from './pages/legal/TermsOfService';
 import CookiePolicy from './pages/legal/CookiePolicy';
+import RefundPolicy from './pages/legal/RefundPolicy';
 
 
 
@@ -79,6 +83,10 @@ export const router = createBrowserRouter([
     element: <AdminLogin />,
   },
   {
+    path: '/verify-email',
+    element: <VerifyEmail />,
+  },
+  {
     path: '/AdminDashboard',
     element: <AdminDashboard />,
   },
@@ -112,8 +120,16 @@ export const router = createBrowserRouter([
         element: <AddNewProduct/>,
       },
       {
+        path: 'add-service/:shopId',
+        element: <AddService/>,
+      },
+      {
          path : 'productDetails/:productId',
          element : <ProductDetail/>
+      },
+      {
+         path : 'serviceDetails/:serviceId',
+         element : <ServiceDetail/>
       },
       {
         path: 'videos',
@@ -138,6 +154,10 @@ export const router = createBrowserRouter([
       {
         path: 'legal/cookies',
         element: <CookiePolicy />,
+      },
+      {
+        path: 'legal/refund',
+        element: <RefundPolicy />,
       },
       {
         path: 'conversations',

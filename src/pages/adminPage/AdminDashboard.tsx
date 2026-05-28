@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '../../hooks/useDebounce';
 import {
-  Dashboard, People, ShoppingBag, Store, 
+  Dashboard, People, ShoppingBag, Store,
   Campaign, ShowChart, Settings, ExitToApp,
   Add, Delete, Edit, Search,
   Visibility,
   VisibilityOff,
-  FilterList
+  FilterList,
+  Inbox
 } from '@mui/icons-material';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -17,6 +18,7 @@ import AdvertiseForm from './AdvertiseForm';
 import UsersManagement from './UsersManagement';
 import ShopsManagement from './ShopsManagement';
 import ProductsManagement from './ProductsManagement';
+import AdminInbox from './AdminInbox';
 
 
 interface MenuItem {
@@ -50,6 +52,7 @@ interface Advertisement {
 
 const menuItems: MenuItem[] = [
   { icon: <Dashboard />, label: 'Dashboard', value: 'dashboard' },
+  { icon: <Inbox />, label: 'Moderation Inbox', value: 'inbox' },
   { icon: <People />, label: 'Users', value: 'users' },
   { icon: <Store />, label: 'Shops', value: 'shops' },
   { icon: <ShoppingBag />, label: 'Products', value: 'products' },
@@ -242,6 +245,9 @@ const AdminDashboard = () => {
             </div>
           </div>
         );
+
+      case 'inbox':
+        return <AdminInbox />;
 
       case 'users':
         return <UsersManagement />;

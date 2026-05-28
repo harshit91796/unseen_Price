@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Policy, Gavel, Cookie, Mail, Favorite } from '@mui/icons-material';
+import { Home, Policy, Gavel, Cookie, Mail, Favorite, Receipt } from '@mui/icons-material';
 import './Footer.css';
 
 const Footer: React.FC = () => {
@@ -16,6 +16,7 @@ const Footer: React.FC = () => {
   const legalLinks = [
     { path: '/legal/privacy', label: 'Privacy Policy', icon: <Policy /> },
     { path: '/legal/terms', label: 'Terms of Service', icon: <Gavel /> },
+    { path: '/legal/refund', label: 'Refund & Cancellation', icon: <Receipt /> },
     { path: '/legal/cookies', label: 'Cookie Policy', icon: <Cookie /> },
   ];
 

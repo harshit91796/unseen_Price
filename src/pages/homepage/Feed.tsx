@@ -4,6 +4,7 @@ import { images, shopeImages } from '../../Pictures';
 import { useEffect, useState, useCallback } from 'react';
 import { getAdvertisementNearby } from '../../Api';
 import { LocationOn, ArrowBack, ArrowForward } from '@mui/icons-material';
+import SafeImage from '../../components/SafeImage/SafeImage';
 interface Advertisement {
   _id: string;
   title: string;
@@ -72,20 +73,21 @@ const Feed = () => {
         navigator.geolocation.getCurrentPosition(async (position) => {
           const { latitude, longitude } = position.coords;
           
-          // Use reverse geocoding to get city and state
+          // Use Nominatim reverse geocoding to get city and state (free, no API key)
           try {
             const response = await fetch(
-              `https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=cb7fde574c5549e4b33f87b1037822f7`
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+              { headers: { 'User-Agent': 'UnseenPrice/1.0', 'Accept-Language': 'en' } }
             );
             const data = await response.json();
-            
-            if (data.results && data.results[0]) {
-              const result = data.results[0].components;
+
+            if (data.address) {
+              const addr = data.address;
               const locationData: UserLocation = {
                 coordinates: { latitude, longitude },
-                city: result.city || result.town || '',
-                state: result.state || '',
-                country: result.country || ''
+                city: addr.city || addr.town || addr.village || addr.county || '',
+                state: addr.state || '',
+                country: addr.country || ''
               };
 
               // Store in localStorage
@@ -251,9 +253,11 @@ const Feed = () => {
                     </div>
                   </div>
                   <div className="banner-ad-image">
-                    <img 
-                      src={bannerAds[currentBannerIndex].images?.[0] || 'https://via.placeholder.com/600x300?text=Promo'} 
+                    <SafeImage
+                      src={bannerAds[currentBannerIndex].images?.[0]}
                       alt={bannerAds[currentBannerIndex].title || 'Promotion'}
+                      preset="HERO"
+                      lazy={false}
                     />
                   </div>
                 </div>
@@ -335,7 +339,7 @@ const Feed = () => {
                 className="ad-card"
               >
                 <div className="ad-image-wrapper">
-                  <img src={ad.images?.[0] || 'https://via.placeholder.com/400x300?text=Promo'} alt={ad.title || 'Promotion'} className="ad-image" />
+                  <SafeImage src={ad.images?.[0]} alt={ad.title || 'Promotion'} className="ad-image" preset="AD" />
                 </div>
                 <div className="ad-info">
                   <h3>{ad.title}</h3>

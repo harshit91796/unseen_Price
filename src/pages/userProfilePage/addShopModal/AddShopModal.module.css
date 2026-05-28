@@ -452,3 +452,66 @@
 .suggestionItem:not(:last-child) {
   border-bottom: 1px solid #eee;
 }
+
+/* Business Type Picker */
+.typePickerSection {
+  padding: 1.5rem 0.5rem 0.5rem;
+}
+
+.typePickerTitle {
+  text-align: center;
+  font-size: 1rem;
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.typePickerGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .typePickerGrid { grid-template-columns: 1fr; }
+}
+
+.typePickerCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 2rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: center;
+}
+
+.typePickerCard:hover {
+  border-color: #667eea;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+}
+
+.typePickerCard h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #111827;
+  font-weight: 600;
+}
+
+.typePickerCard p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.typePickerIcon {
+  font-size: 2.5rem !important;
+  color: #667eea;
+  margin-bottom: 0.25rem;
+}

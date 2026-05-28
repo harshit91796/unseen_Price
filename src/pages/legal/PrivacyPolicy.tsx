@@ -15,15 +15,43 @@ const PrivacyPolicy: React.FC = () => {
       <p>
         We may collect information that you provide directly to us, including when
         you create an account, add a shop or product, use search or location
-        features, or contact us for support.
+        features, subscribe to a paid plan, or contact us for support.
       </p>
       <ul>
         <li>Account information (name, email, phone, profile picture)</li>
-        <li>Shop and product information you list</li>
+        <li>Shop, product, and service information you list</li>
         <li>Location data when you choose to share it for nearby results</li>
+        <li>Reviews, ratings, and reports you submit</li>
+        <li>
+          Payment-related metadata for paid subscriptions (your plan, billing
+          history, payment status). We do <strong>not</strong> store your card,
+          UPI, or netbanking credentials — these are handled directly by our
+          payment processor, Razorpay.
+        </li>
         <li>Communications and support requests</li>
         <li>Usage data (e.g., pages visited, features used)</li>
       </ul>
+
+      <h2>Payment Processing</h2>
+      <p>
+        When you subscribe to a paid plan, payments are processed by{' '}
+        <a href="https://razorpay.com" target="_blank" rel="noopener noreferrer">
+          Razorpay
+        </a>
+        , an RBI-regulated Indian payment gateway. Your full card number, CVV,
+        and UPI PIN are entered directly into Razorpay's secure checkout and are
+        never transmitted to or stored by Unseen Price. We receive only a
+        transaction ID and payment confirmation. For details on Razorpay's data
+        practices, see{' '}
+        <a
+          href="https://razorpay.com/privacy/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Razorpay's Privacy Policy
+        </a>
+        .
+      </p>
 
       <h2>How We Use Your Information</h2>
       <p>
@@ -60,6 +88,13 @@ const PrivacyPolicy: React.FC = () => {
         We use cookies and similar technologies as described in our{' '}
         <Link to="/legal/cookies">Cookie Policy</Link>. You can manage your preferences
         in your browser settings.
+      </p>
+
+      <h2>Subscription & Refunds</h2>
+      <p>
+        For details about how paid subscriptions work, cancellation, and the
+        limited refund situations we honour, see our{' '}
+        <Link to="/legal/refund">Refund & Cancellation Policy</Link>.
       </p>
 
       <h2>Changes to This Policy</h2>

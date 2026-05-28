@@ -15,7 +15,7 @@ import { createProduct, getShopDetails } from '../../Api';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate, useParams } from 'react-router-dom';
-import { uploadImagesToSupabase } from '../../services/service';
+import { uploadImagesToSupabase, safeRevokeBlobUrl } from '../../services/service';
 
 const AddNewProduct: React.FC = () => {
   const { shopId } = useParams();
@@ -27,17 +27,30 @@ const AddNewProduct: React.FC = () => {
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [price, setPrice] = useState<number>(0);
+  const [mrp, setMrp] = useState<number>(0);
   const [stock, setStock] = useState<number>(0);
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
   const [genderCategory, setGenderCategory] = useState<string>('mens');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState<boolean>(false);
   const [newCategory, setNewCategory] = useState<string>('');
+  const [sizes, setSizes] = useState<string[]>([]);
+  const [colors, setColors] = useState<string[]>([]);
+  const [sizeInput, setSizeInput] = useState('');
+  const [colorInput, setColorInput] = useState('');
 
   const navigate = useNavigate();
 
   useEffect(() => {
     ShopDetails();
+  }, []);
+
+  // Cleanup any blob URLs on unmount (user navigated away without saving)
+  useEffect(() => {
+    return () => {
+      uploadedImages.forEach(safeRevokeBlobUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const ShopDetails = async () => {
@@ -68,18 +81,43 @@ const AddNewProduct: React.FC = () => {
     fileInputRef.current?.click();
   };
 
+  const addSize = () => {
+    const trimmed = sizeInput.trim();
+    if (!trimmed) return;
+    if (sizes.includes(trimmed)) { setSizeInput(''); return; }
+    setSizes([...sizes, trimmed]);
+    setSizeInput('');
+  };
+  const removeSize = (s: string) => setSizes(sizes.filter(x => x !== s));
+
+  const addColor = () => {
+    const trimmed = colorInput.trim();
+    if (!trimmed) return;
+    if (colors.includes(trimmed)) { setColorInput(''); return; }
+    setColors([...colors, trimmed]);
+    setColorInput('');
+  };
+  const removeColor = (c: string) => setColors(colors.filter(x => x !== c));
+
   const handleAddProduct = async () => {
     if (!name || !description || !price || uploadedImages.length === 0) {
       toast.error('Please fill in all required fields and upload at least one image');
       return;
     }
+    if (mrp > 0 && mrp <= price) {
+      toast.warning("MRP should be higher than the selling price (otherwise leave it empty)");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const productData = {
+      const productData: any = {
         name,
         description,
         price,
+        mrp: mrp > 0 ? mrp : null,
+        sizes,
+        colors,
         productCategory: addedCategory || 'Extra',
         genderCategory: genderCategory || 'mens',
         images: [] as string[],
@@ -245,7 +283,7 @@ const AddNewProduct: React.FC = () => {
             <h2><AttachMoney /> Pricing & Stock</h2>
             <div className="form-grid">
               <div className="form-field">
-                <label>Price</label>
+                <label>Selling Price <span style={{color:'#ef4444'}}>*</span></label>
                 <input
                   type="number"
                   value={price}
@@ -254,6 +292,17 @@ const AddNewProduct: React.FC = () => {
                   className="form-input"
                   min="0"
                   required
+                />
+              </div>
+              <div className="form-field">
+                <label>M.R.P. <span style={{color:'#9ca3af', fontWeight:400, fontSize:'0.8rem'}}>(optional — shows discount)</span></label>
+                <input
+                  type="number"
+                  value={mrp || ''}
+                  onChange={(e) => setMrp(Number(e.target.value))}
+                  placeholder="₹ 999"
+                  className="form-input"
+                  min="0"
                 />
               </div>
               <div className="form-field">
@@ -269,7 +318,7 @@ const AddNewProduct: React.FC = () => {
               </div>
               <div className="form-field">
                 <label>Status</label>
-                <select 
+                <select
                   value={isAvailable ? 'Available' : 'Out of Stock'}
                   onChange={(e) => setIsAvailable(e.target.value === 'Available')}
                   className="form-select"
@@ -277,6 +326,76 @@ const AddNewProduct: React.FC = () => {
                   <option value="Available">Available</option>
                   <option value="Out of Stock">Out of Stock</option>
                 </select>
+              </div>
+            </div>
+            {mrp > 0 && mrp > price && (
+              <p style={{ margin: '0.4rem 0 0', fontSize: '0.85rem', color: '#059669' }}>
+                Customers will see <strong>{Math.round(((mrp - price) / mrp) * 100)}% OFF</strong> on this product.
+              </p>
+            )}
+          </div>
+
+          {/* Variants — sizes & colors (optional, for clothing/shoes etc.) */}
+          <div className="form-group">
+            <h2>Variants <span style={{color:'#9ca3af', fontSize:'0.9rem', fontWeight:400}}>(optional — skip for products with no size/color)</span></h2>
+            <div className="form-grid">
+              <div className="form-field">
+                <label>Available Sizes</label>
+                <div style={{display:'flex', gap:'0.4rem'}}>
+                  <input
+                    type="text"
+                    value={sizeInput}
+                    onChange={(e) => setSizeInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSize(); } }}
+                    placeholder="e.g. S, M, L, 38, XL"
+                    className="form-input"
+                  />
+                  <button type="button" onClick={addSize} className="btn btn-secondary" style={{padding:'0.5rem 1rem'}}>Add</button>
+                </div>
+                <div style={{display:'flex', flexWrap:'wrap', gap:'0.4rem', marginTop:'0.5rem'}}>
+                  {sizes.map(s => (
+                    <span key={s} style={{
+                      display:'inline-flex', alignItems:'center', gap:'0.3rem',
+                      padding:'0.25rem 0.7rem', background:'#f0f1ff', color:'#4338ca',
+                      borderRadius:'16px', fontSize:'0.85rem', fontWeight:500
+                    }}>
+                      {s}
+                      <button type="button" onClick={() => removeSize(s)} style={{
+                        background:'transparent', border:'none', color:'#6b7280', cursor:'pointer',
+                        fontSize:'1rem', padding:0, lineHeight:1
+                      }}>×</button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="form-field">
+                <label>Available Colors</label>
+                <div style={{display:'flex', gap:'0.4rem'}}>
+                  <input
+                    type="text"
+                    value={colorInput}
+                    onChange={(e) => setColorInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addColor(); } }}
+                    placeholder="e.g. Red, Blue, Black"
+                    className="form-input"
+                  />
+                  <button type="button" onClick={addColor} className="btn btn-secondary" style={{padding:'0.5rem 1rem'}}>Add</button>
+                </div>
+                <div style={{display:'flex', flexWrap:'wrap', gap:'0.4rem', marginTop:'0.5rem'}}>
+                  {colors.map(c => (
+                    <span key={c} style={{
+                      display:'inline-flex', alignItems:'center', gap:'0.3rem',
+                      padding:'0.25rem 0.7rem', background:'#fef3c7', color:'#92400e',
+                      borderRadius:'16px', fontSize:'0.85rem', fontWeight:500
+                    }}>
+                      {c}
+                      <button type="button" onClick={() => removeColor(c)} style={{
+                        background:'transparent', border:'none', color:'#6b7280', cursor:'pointer',
+                        fontSize:'1rem', padding:0, lineHeight:1
+                      }}>×</button>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

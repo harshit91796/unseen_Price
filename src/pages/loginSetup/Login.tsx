@@ -24,9 +24,13 @@ const Login: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
+
   const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setNeedsVerification(false);
     try {
       const userData = await login(formData.email, formData.password);
       console.log('User data:', userData);
@@ -41,8 +45,30 @@ const Login: React.FC = () => {
       else{
         setError('Login failed. Please check your email and password.');
       }
-    } catch (error) {
-      setError('Login failed. Please check your email and password.');
+    } catch (err: any) {
+      const msg: string = err?.response?.data?.message || '';
+      if (msg.toLowerCase().includes('verify your email')) {
+        setNeedsVerification(true);
+        setError(msg);
+      } else if (msg.toLowerCase().includes('banned')) {
+        setError(msg);
+      } else {
+        setError('Login failed. Please check your email and password.');
+      }
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!formData.email) return;
+    setResendingVerification(true);
+    try {
+      const { resendVerificationEmail } = await import('../../Api');
+      const res = await resendVerificationEmail(formData.email);
+      setError(res?.message || 'Verification email sent. Check your inbox.');
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Could not send verification email');
+    } finally {
+      setResendingVerification(false);
     }
   };
 
@@ -82,6 +108,26 @@ const Login: React.FC = () => {
         <div className="auth-content">
           <h2>Please Enter your Account details</h2>
           {error && <p className="error-message">{error}</p>}
+          {needsVerification && (
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resendingVerification}
+              style={{
+                marginTop: '0.5rem',
+                padding: '0.6rem 1rem',
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontWeight: 600,
+                width: '100%'
+              }}
+            >
+              {resendingVerification ? 'Sending...' : 'Resend verification email'}
+            </button>
+          )}
           
           <form onSubmit={handleEmailLogin} className="auth-form">
             <input 

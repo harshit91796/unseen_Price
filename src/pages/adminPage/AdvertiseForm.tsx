@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Close } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { fetchPlaceSuggestions } from '../../utils/opencage';
 import styles from './AdminDashboard.module.css';
-import { createAdvertisement, updateAdvertisement } from '../../Api';
-import { uploadImagesToSupabase } from '../../services/service';
+import { createAdvertisement, updateAdvertisement, getCategories } from '../../Api';
+import { uploadImagesToSupabase, safeRevokeBlobUrl } from '../../services/service';
 
 /** When provided, form is in edit mode and will call update instead of create */
 export interface InitialAdForEdit {
@@ -19,6 +19,7 @@ export interface InitialAdForEdit {
     country: string;
     radius: number;
     targetType: 'CITY' | 'STATE' | 'GLOBAL';
+    categories?: string[];
   };
   startDate: string;
   endDate: string;
@@ -56,6 +57,7 @@ interface AdFormData {
     country: string;
     radius: number;
     targetType: 'CITY' | 'STATE' | 'GLOBAL';
+    categories: string[];
   };
   startDate: string;
   endDate: string;
@@ -99,6 +101,7 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ initialAd, onClose, onSuc
   const [locationQuery, setLocationQuery] = useState('');
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<{ name: string; image?: string }[]>([]);
   const [adFormData, setAdFormData] = useState<AdFormData>({
     title: '',
     description: '',
@@ -109,13 +112,42 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ initialAd, onClose, onSuc
       state: '',
       country: '',
       radius: 100,
-      targetType: 'CITY'
+      targetType: 'CITY',
+      categories: []
     },
     startDate: '',
     endDate: '',
     link: '',
     isActive: true
   });
+
+  // Load available categories so admin can pick which ones this ad targets
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await getCategories();
+        const list = Array.isArray(resp) ? resp : (resp?.data && Array.isArray(resp.data) ? resp.data : []);
+        setAvailableCategories(list);
+      } catch (e) {
+        console.error('Failed to load categories:', e);
+        setAvailableCategories([]);
+      }
+    })();
+  }, []);
+
+  const toggleCategory = (catName: string) => {
+    setAdFormData(prev => {
+      const current = prev.targeting.categories || [];
+      const exists = current.includes(catName);
+      return {
+        ...prev,
+        targeting: {
+          ...prev.targeting,
+          categories: exists ? current.filter(c => c !== catName) : [...current, catName]
+        }
+      };
+    });
+  };
 
   useEffect(() => {
     if (!initialAd) return;
@@ -129,7 +161,8 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ initialAd, onClose, onSuc
         state: initialAd.targeting?.state ?? '',
         country: initialAd.targeting?.country ?? '',
         radius: initialAd.targeting?.radius ?? 100,
-        targetType: initialAd.targeting?.targetType ?? 'CITY'
+        targetType: initialAd.targeting?.targetType ?? 'CITY',
+        categories: initialAd.targeting?.categories ?? []
       },
       startDate: initialAd.startDate ? initialAd.startDate.slice(0, 10) : '',
       endDate: initialAd.endDate ? initialAd.endDate.slice(0, 10) : '',
@@ -139,14 +172,29 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ initialAd, onClose, onSuc
     setUploadedImages(initialAd.images || []);
   }, [initialAd]);
 
-  const handleLocationSearch = async (query: string) => {
+  // Debounce timer for Nominatim — its limit is 1 req/sec, so we wait 800ms after typing stops
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLocationSearch = (query: string) => {
     setLocationQuery(query);
-    if (query.length > 2) {
-      const suggestions = await fetchPlaceSuggestions(query);
-      setLocationSuggestions(suggestions);
-    } else {
-      setLocationSuggestions([]);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
+
+    if (query.length < 3) {
+      setLocationSuggestions([]);
+      return;
+    }
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const suggestions = await fetchPlaceSuggestions(query);
+        setLocationSuggestions(suggestions);
+      } catch (err) {
+        console.error('Failed to fetch place suggestions:', err);
+      }
+    }, 800);
   };
 
   const handleLocationSelect = (suggestion: LocationSuggestion) => {
@@ -213,6 +261,8 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ initialAd, onClose, onSuc
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
+    const removed = uploadedImages[indexToRemove];
+    if (removed) safeRevokeBlobUrl(removed);
     setUploadedImages(prev => prev.filter((_, index) => index !== indexToRemove));
     setAdFormData(prev => ({
       ...prev,
@@ -360,6 +410,39 @@ const AdvertiseForm: React.FC<AdvertiseFormProps> = ({ initialAd, onClose, onSuc
                 <p className={styles.checkboxTitle}>Global</p>
                 <p className={styles.checkboxDescription}>All users will see this ad</p>
               </div>
+            </div>
+
+            <h3 className={styles.sectionTitle}>Category Targeting</h3>
+            <p style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: 0, marginBottom: '0.5rem' }}>
+              Pick categories where this ad should appear. Leave empty to show in all categories.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+              {availableCategories.length === 0 && (
+                <p style={{ color: '#9ca3af', fontSize: '0.85rem' }}>Loading categories...</p>
+              )}
+              {availableCategories.map(cat => {
+                const selected = adFormData.targeting.categories?.includes(cat.name);
+                return (
+                  <button
+                    key={cat.name}
+                    type="button"
+                    onClick={() => toggleCategory(cat.name)}
+                    style={{
+                      padding: '0.4rem 0.9rem',
+                      borderRadius: '20px',
+                      border: selected ? '2px solid #667eea' : '1.5px solid #e5e7eb',
+                      background: selected ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'white',
+                      color: selected ? 'white' : '#374151',
+                      fontSize: '0.85rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
             </div>
 
             <h3 className={styles.sectionTitle}>Ad Content</h3>

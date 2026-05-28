@@ -1,9 +1,10 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import LegalPageLayout from '../../components/legal/LegalPageLayout';
 
 const TermsOfService: React.FC = () => {
   return (
-    <LegalPageLayout title="Terms of Service" lastUpdated="January 24, 2026">
+    <LegalPageLayout title="Terms of Service" lastUpdated="2026-05-08">
       <p>
         Welcome to Unseen Price. By accessing or using our website and services,
         you agree to be bound by these Terms of Service. Please read them carefully.
@@ -44,6 +45,53 @@ const TermsOfService: React.FC = () => {
         do so and that your listings comply with applicable laws. We may remove
         or suspend listings that violate our policies or the law. We do not
         guarantee any level of visibility or traffic for your listings.
+      </p>
+
+      <h2>Subscription Plans, Billing, and Cancellation</h2>
+      <p>
+        Unseen Price offers a free plan and paid monthly subscription plans
+        ("Pro" and "Business"). Plan prices, features, and limits are shown on
+        our <Link to="/pricing">Pricing page</Link>.
+      </p>
+      <ul>
+        <li>
+          Paid plans are billed in advance for a 30-day period in Indian Rupees
+          (INR) through Razorpay, our authorised payment processor.
+        </li>
+        <li>
+          Unless you cancel auto-renewal before the end of your current period,
+          your subscription will automatically renew at the then-current price.
+        </li>
+        <li>
+          You can cancel auto-renewal at any time from your profile under
+          "My Subscription". After cancellation, you keep access until the end
+          of the period you've already paid for, and your account is downgraded
+          to the Free plan thereafter.
+        </li>
+        <li>
+          We may change plan prices, limits, or features with reasonable advance
+          notice (at least 14 days for material changes). Changes apply at your
+          next renewal — they do not retroactively affect the period you've
+          already paid for.
+        </li>
+        <li>
+          If a renewal payment fails, your account will be downgraded to the
+          Free plan after our retry attempts are exhausted.
+        </li>
+      </ul>
+      <p>
+        Refunds are governed by our{' '}
+        <Link to="/legal/refund">Refund & Cancellation Policy</Link>. By
+        subscribing, you confirm you've read and agreed to that policy in
+        addition to these Terms.
+      </p>
+
+      <h2>Plan Limits and Fair Use</h2>
+      <p>
+        Each plan has limits on the number of shops/businesses, products, and
+        services you can list. We reserve the right to enforce these limits and
+        to suspend accounts that attempt to circumvent them (for example, by
+        creating multiple Free accounts to exceed Free-tier limits).
       </p>
 
       <h2>Intellectual Property</h2>

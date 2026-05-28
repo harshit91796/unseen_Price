@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Close, Store, LocationOn, Phone, Description, Email, AddAPhoto, Delete } from '@mui/icons-material';
+import { Close, Store, LocationOn, Phone, Description, Email, AddAPhoto, Delete, RoomService } from '@mui/icons-material';
 import styles from './AddShopModal.module.css';
 
 const MODAL_PORTAL_ID = 'add-shop-modal-portal';
@@ -18,7 +18,7 @@ function getOrCreateModalPortal(): HTMLElement {
   return el;
 }
 import { FaCity } from 'react-icons/fa';
-import { uploadImagesToSupabase } from '../../../services/service';
+import { uploadImagesToSupabase, safeRevokeBlobUrl } from '../../../services/service';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { fetchPlaceSuggestions } from '../../../utils/opencage';
@@ -96,9 +96,20 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
       };
     }
   }, [isOpen]);
-  
+
+  // Revoke any leftover blob URLs on unmount (user closed modal without submitting)
+  useEffect(() => {
+    return () => {
+      uploadedImages.forEach(safeRevokeBlobUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [businessType, setBusinessType] = useState<'shop' | 'service' | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
+    type: 'shop' as 'shop' | 'service',
     phone: '',
     email: '',
     address: {
@@ -124,6 +135,11 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
     images: [] as string[],
   });
 
+  const handleSelectBusinessType = (type: 'shop' | 'service') => {
+    setBusinessType(type);
+    setFormData(prev => ({ ...prev, type }));
+  };
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
@@ -140,6 +156,7 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
   };
 
   const handleRemoveImage = (imageToRemove: string) => {
+    safeRevokeBlobUrl(imageToRemove); // free memory if it's a blob URL
     setUploadedImages(prevImages => prevImages.filter(image => image !== imageToRemove));
     if (selectedImage === imageToRemove) {
       setSelectedImage(uploadedImages.find(image => image !== imageToRemove) || null);
@@ -176,7 +193,8 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
       clearTimeout(searchTimeout);
     }
 
-    if (!query.trim()) {
+    // Don't query at all if too short — Nominatim rate-limits aggressively (1 req/sec)
+    if (!query.trim() || query.trim().length < 3) {
       setLocationSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -185,13 +203,12 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
     const timeout = setTimeout(async () => {
       try {
         const suggestions = await fetchPlaceSuggestions(query);
-        console.log( 'suggestions', suggestions);
         setLocationSuggestions(suggestions);
         setShowSuggestions(true);
       } catch (error) {
         console.error('Error fetching location suggestions:', error);
       }
-    }, );
+    }, 800); // 800ms debounce — stays under Nominatim's 1 req/sec limit
 
     setSearchTimeout(timeout);
   };
@@ -249,12 +266,44 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
         style={{ pointerEvents: 'auto' }}
       >
         <div className={styles.modalHeader}>
-          <h2><Store /> Add New Shop</h2>
+          <h2>
+            {businessType === 'service' ? <RoomService /> : <Store />}
+            {businessType === null
+              ? 'Add New Business'
+              : businessType === 'service'
+                ? 'Add Service Business (Step 1 of 2)'
+                : 'Add New Shop'}
+          </h2>
           <button className={styles.closeButton} onClick={onClose}>
             <Close />
           </button>
         </div>
 
+        {businessType === null ? (
+          <div className={styles.typePickerSection}>
+            <p className={styles.typePickerTitle}>What kind of business are you adding?</p>
+            <div className={styles.typePickerGrid}>
+              <button
+                type="button"
+                className={styles.typePickerCard}
+                onClick={() => handleSelectBusinessType('shop')}
+              >
+                <Store className={styles.typePickerIcon} />
+                <h3>Shop</h3>
+                <p>Sells physical products (clothing, electronics, food, toys). You'll add products one by one after creating it.</p>
+              </button>
+              <button
+                type="button"
+                className={styles.typePickerCard}
+                onClick={() => handleSelectBusinessType('service')}
+              >
+                <RoomService className={styles.typePickerIcon} />
+                <h3>Service Business</h3>
+                <p>Offers services (salon, clinic, hotel, gym, restaurant). You'll add individual services (e.g. Haircut, Room) after creating it.</p>
+              </button>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* Image Upload Section */}
           <div className={styles.imageUploadSection}>
@@ -493,14 +542,15 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
           </div>
 
           <div className={styles.buttonGroup}>
-            <button type="button" className={styles.cancelButton} onClick={onClose}>
-              Cancel
+            <button type="button" className={styles.cancelButton} onClick={() => setBusinessType(null)}>
+              Back
             </button>
             <button type="submit" className={styles.submitButton}>
-              Add Shop
+              {businessType === 'service' ? 'Add Service' : 'Add Shop'}
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

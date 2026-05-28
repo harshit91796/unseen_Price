@@ -1,0 +1,143 @@
+.my-sub {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.my-sub.pro,
+.my-sub.business {
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9ff 100%);
+  border-color: #667eea;
+}
+
+.my-sub-loading {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.my-sub-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.my-sub-header h2 {
+  margin: 0 0 0.4rem 0;
+  font-size: 1.1rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.my-sub-plan-name {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.my-sub-plan-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0.2rem 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 6px;
+}
+
+.my-sub-upgrade-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.my-sub-upgrade-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+}
+
+.my-sub-expiry {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.8rem;
+  background: #ecfdf5;
+  color: #047857;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.my-sub-expiry.soon {
+  background: #fefce8;
+  color: #92400e;
+}
+
+.my-sub-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.my-sub-usage-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.my-sub-usage-row strong {
+  color: #111827;
+}
+
+.my-sub-cancel-btn {
+  display: block;
+  width: 100%;
+  padding: 0.6rem;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.my-sub-cancel-btn:hover:not(:disabled) {
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.my-sub-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.my-sub-free-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+}

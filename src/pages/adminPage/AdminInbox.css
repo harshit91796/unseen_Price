@@ -1,0 +1,330 @@
+.admin-inbox {
+  padding: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.admin-inbox-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.admin-inbox-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.5rem;
+  color: #111827;
+}
+
+.admin-inbox-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #4b5563;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.admin-inbox-refresh:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.admin-inbox-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0;
+}
+
+.admin-inbox-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.admin-inbox-tab:hover {
+  color: #374151;
+}
+
+.admin-inbox-tab.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+.admin-inbox-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #667eea;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.admin-inbox-badge.red {
+  background: #ef4444;
+}
+
+.admin-inbox-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 0.4rem 0.9rem;
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 20px;
+  cursor: pointer;
+  color: #4b5563;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.filter-chip.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+.admin-inbox-loading,
+.admin-inbox-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.admin-inbox-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-inbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.inbox-card {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.inbox-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.inbox-card-img {
+  width: 140px;
+  height: 100%;
+  min-height: 140px;
+  background: #f3f4f6;
+  overflow: hidden;
+}
+
+.inbox-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.inbox-card-img-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #9ca3af;
+  font-size: 2rem;
+}
+
+.inbox-card-content {
+  padding: 1rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.inbox-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.inbox-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.7rem;
+  background: #f0f1ff;
+  color: #667eea;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.inbox-card-time {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.inbox-card-content h3 {
+  margin: 0 0 0.4rem 0;
+  font-size: 1.1rem;
+  color: #111827;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.inbox-card-price {
+  margin: 0 0 0.4rem 0;
+  font-weight: 600;
+  color: #059669;
+}
+
+.inbox-card-desc {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.85rem;
+  color: #4b5563;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.inbox-card-owner {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.inbox-report-info {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  background: #fef2f2;
+  border-left: 3px solid #ef4444;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #7f1d1d;
+}
+
+.inbox-report-comment {
+  margin: 0.4rem 0 0 0;
+  font-style: italic;
+  color: #4b5563;
+}
+
+.inbox-report-reporter {
+  margin: 0.3rem 0 0 0;
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.inbox-card-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.inbox-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.8rem;
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  color: #374151;
+}
+
+.inbox-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.inbox-btn.safe { color: #059669; border-color: #d1fae5; }
+.inbox-btn.safe:hover { background: #ecfdf5; border-color: #10b981; }
+
+.inbox-btn.deactivate { color: #ca8a04; border-color: #fef3c7; }
+.inbox-btn.deactivate:hover { background: #fefce8; border-color: #f59e0b; }
+
+.inbox-btn.delete { color: #dc2626; border-color: #fee2e2; }
+.inbox-btn.delete:hover { background: #fef2f2; border-color: #ef4444; }
+
+.inbox-btn.ban {
+  color: white;
+  background: #1f2937;
+  border-color: #1f2937;
+}
+.inbox-btn.ban:hover { background: #111827; border-color: #111827; }
+
+.inbox-card-orphan {
+  grid-template-columns: 1fr;
+}
+
+.inbox-card-orphan .inbox-card-content {
+  padding: 1rem;
+}
+
+@media (max-width: 640px) {
+  .inbox-card {
+    grid-template-columns: 1fr;
+  }
+  .inbox-card-img {
+    width: 100%;
+    height: 200px;
+    min-height: unset;
+  }
+}

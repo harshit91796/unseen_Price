@@ -20,10 +20,15 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
   const [name, setName] = useState<string>(product?.name || '');
   const [description, setDescription] = useState<string>(product?.description || '');
   const [price, setPrice] = useState<number>(product?.price || 0);
+  const [mrp, setMrp] = useState<number>(product?.mrp || 0);
   const [stock, setStock] = useState<number>(product?.stock || 0);
   const [isAvailable, setIsAvailable] = useState<boolean>(product?.isAvailable ?? true);
   const [genderCategory, setGenderCategory] = useState<string>(product?.genderCategory || 'mens');
   const [productCategory, setProductCategory] = useState<string>(product?.productCategory || 'Extra');
+  const [sizes, setSizes] = useState<string[]>(product?.sizes || []);
+  const [colors, setColors] = useState<string[]>(product?.colors || []);
+  const [sizeInput, setSizeInput] = useState('');
+  const [colorInput, setColorInput] = useState('');
   const [uploadedImages, setUploadedImages] = useState<string[]>(product?.images || []);
   const [selectedImage, setSelectedImage] = useState<string | null>(product?.images?.[0] || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,10 +39,13 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
     setName(product.name || '');
     setDescription(product.description || '');
     setPrice(product.price || 0);
+    setMrp(product.mrp || 0);
     setStock(product.stock || 0);
     setIsAvailable(product.isAvailable ?? true);
     setGenderCategory(product.genderCategory || 'mens');
     setProductCategory(product.productCategory || 'Extra');
+    setSizes(product.sizes || []);
+    setColors(product.colors || []);
     setUploadedImages(product.images || []);
     setSelectedImage(product.images?.[0] || null);
   }, [isOpen, product]);
@@ -80,10 +88,14 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
     if (name !== product.name) updatedData.name = name;
     if (description !== product.description) updatedData.description = description;
     if (price !== product.price) updatedData.price = price;
+    const newMrp = mrp > 0 ? mrp : null;
+    if (newMrp !== (product.mrp ?? null)) updatedData.mrp = newMrp;
     if (stock !== product.stock) updatedData.stock = stock;
     if (isAvailable !== product.isAvailable) updatedData.isAvailable = isAvailable;
     if (genderCategory !== product.genderCategory) updatedData.genderCategory = genderCategory;
     if (productCategory !== product.productCategory) updatedData.productCategory = productCategory;
+    if (JSON.stringify(sizes) !== JSON.stringify(product.sizes || [])) updatedData.sizes = sizes;
+    if (JSON.stringify(colors) !== JSON.stringify(product.colors || [])) updatedData.colors = colors;
 
     const existingImages = product.images || [];
     const newImageFiles = uploadedImages.filter((img) => !existingImages.includes(img));
@@ -163,7 +175,7 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
               <div className="product-edit-row">
                 <label className="product-edit-label">
-                  Price (₹)
+                  Selling Price (₹)
                   <input
                     type="number"
                     value={price}
@@ -171,6 +183,18 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     onChange={(e) => setPrice(Number(e.target.value))}
                     className="product-edit-input"
                     required
+                  />
+                </label>
+
+                <label className="product-edit-label">
+                  M.R.P. (₹) — optional
+                  <input
+                    type="number"
+                    value={mrp || ''}
+                    min={0}
+                    onChange={(e) => setMrp(Number(e.target.value))}
+                    className="product-edit-input"
+                    placeholder="Leave empty if no discount"
                   />
                 </label>
 
@@ -184,6 +208,82 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     className="product-edit-input"
                     required
                   />
+                </label>
+              </div>
+
+              <div className="product-edit-row">
+                <label className="product-edit-label" style={{flex:'1 1 100%'}}>
+                  Available Sizes (optional)
+                  <div style={{display:'flex', gap:'0.4rem', marginTop:'0.3rem'}}>
+                    <input
+                      type="text"
+                      value={sizeInput}
+                      onChange={(e) => setSizeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const v = sizeInput.trim();
+                          if (v && !sizes.includes(v)) setSizes([...sizes, v]);
+                          setSizeInput('');
+                        }
+                      }}
+                      placeholder="Press Enter to add (e.g. S, M, L)"
+                      className="product-edit-input"
+                      style={{flex:1}}
+                    />
+                  </div>
+                  <div style={{display:'flex', flexWrap:'wrap', gap:'0.4rem', marginTop:'0.5rem'}}>
+                    {sizes.map(s => (
+                      <span key={s} style={{
+                        display:'inline-flex', alignItems:'center', gap:'0.3rem',
+                        padding:'0.25rem 0.7rem', background:'#f0f1ff', color:'#4338ca',
+                        borderRadius:'16px', fontSize:'0.85rem', fontWeight:500
+                      }}>
+                        {s}
+                        <button type="button" onClick={() => setSizes(sizes.filter(x => x !== s))} style={{
+                          background:'transparent', border:'none', color:'#6b7280', cursor:'pointer', fontSize:'1rem', padding:0, lineHeight:1
+                        }}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                </label>
+              </div>
+
+              <div className="product-edit-row">
+                <label className="product-edit-label" style={{flex:'1 1 100%'}}>
+                  Available Colors (optional)
+                  <div style={{display:'flex', gap:'0.4rem', marginTop:'0.3rem'}}>
+                    <input
+                      type="text"
+                      value={colorInput}
+                      onChange={(e) => setColorInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const v = colorInput.trim();
+                          if (v && !colors.includes(v)) setColors([...colors, v]);
+                          setColorInput('');
+                        }
+                      }}
+                      placeholder="Press Enter to add (e.g. Red, Blue, Black)"
+                      className="product-edit-input"
+                      style={{flex:1}}
+                    />
+                  </div>
+                  <div style={{display:'flex', flexWrap:'wrap', gap:'0.4rem', marginTop:'0.5rem'}}>
+                    {colors.map(c => (
+                      <span key={c} style={{
+                        display:'inline-flex', alignItems:'center', gap:'0.3rem',
+                        padding:'0.25rem 0.7rem', background:'#fef3c7', color:'#92400e',
+                        borderRadius:'16px', fontSize:'0.85rem', fontWeight:500
+                      }}>
+                        {c}
+                        <button type="button" onClick={() => setColors(colors.filter(x => x !== c))} style={{
+                          background:'transparent', border:'none', color:'#6b7280', cursor:'pointer', fontSize:'1rem', padding:0, lineHeight:1
+                        }}>×</button>
+                      </span>
+                    ))}
+                  </div>
                 </label>
               </div>
 

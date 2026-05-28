@@ -1,0 +1,120 @@
+.verify-email-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.verify-email-card {
+  width: 100%;
+  max-width: 480px;
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.verify-email-card h1 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.5rem;
+  color: #111827;
+}
+
+.verify-email-card p {
+  margin: 0 0 1.25rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.verify-email-icon {
+  font-size: 4rem !important;
+}
+
+.verify-email-icon.success {
+  color: #10b981;
+}
+
+.verify-email-icon.error {
+  color: #ef4444;
+}
+
+.verify-email-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.verify-email-btn {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.verify-email-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+}
+
+.verify-email-btn.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.45);
+}
+
+.verify-email-btn.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.verify-email-btn.secondary {
+  background: white;
+  color: #4b5563;
+  border: 1.5px solid #e5e7eb;
+  margin-top: 0.75rem;
+}
+
+.verify-email-btn.secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.verify-email-resend {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.verify-email-input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.verify-email-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}

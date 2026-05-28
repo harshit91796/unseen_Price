@@ -18,6 +18,13 @@ import { getProductDetails, getAdvertisementNearby, getShopDetails, updateProduc
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
 import ProductEditModal from './edit modal/ProductEditModal';
+import ReportButton from '../../components/ReportButton/ReportButton';
+import SafeImage from '../../components/SafeImage/SafeImage';
+import ReviewSection from '../../components/Reviews/ReviewSection';
+import StarRating from '../../components/Reviews/StarRating';
+import ShareButton from '../../components/ShareButton/ShareButton';
+import PriceDisplay from '../../components/Price/PriceDisplay';
+import StockBadge from '../../components/Price/StockBadge';
 
 interface Advertisement {
   _id: string;
@@ -51,6 +58,7 @@ const ProductDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [visibleAds, setVisibleAds] = useState<Advertisement[]>([]);
@@ -69,11 +77,14 @@ const ProductDetails: React.FC = () => {
   useEffect(() => {
     const fetchAds = async () => {
       try {
+        // Use the product's category so the ads match what the user is viewing
+        const adCategory = productDetails?.category || undefined;
         const ads = await getAdvertisementNearby({
           longitude: userLocation?.coordinates?.longitude,
           latitude: userLocation?.coordinates?.latitude,
           state: userLocation?.state,
           city: userLocation?.city,
+          category: adCategory,
         });
 
         const activeAds = (Array.isArray(ads) ? ads : []).filter((ad: Advertisement) => {
@@ -95,7 +106,7 @@ const ProductDetails: React.FC = () => {
     };
 
     fetchAds();
-  }, [userLocation]);
+  }, [userLocation, productDetails?.category]);
 
   // Rotate ads
   useEffect(() => {
@@ -218,12 +229,14 @@ const ProductDetails: React.FC = () => {
         {/* Left Side - Images */}
         <div className="image-grid">
           {productDetails.images?.map((img: string, index: number) => (
-            <img
+            <SafeImage
               key={index}
               src={img}
               alt={`${productDetails.name} view ${index + 1}`}
               className="product-image"
               onClick={() => setSelectedImageIndex(index)}
+              preset="HERO"
+              lazy={index !== 0}
             />
           ))}
         </div>
@@ -245,24 +258,38 @@ const ProductDetails: React.FC = () => {
           <div className="product-header">
             <div className="product-header-top">
               <h1>{productDetails.name}</h1>
-              {isOwner && (
-                <button
-                  className="product-edit-button"
-                  onClick={() => setIsEditModalOpen(true)}
-                  aria-label="Edit product"
-                >
-                  <Edit /> Edit
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {isOwner && (
+                  <button
+                    className="product-edit-button"
+                    onClick={() => setIsEditModalOpen(true)}
+                    aria-label="Edit product"
+                  >
+                    <Edit /> Edit
+                  </button>
+                )}
+                <ShareButton
+                  title={productDetails.name}
+                  subtitle={`₹${productDetails.price}`}
+                />
+                {!isOwner && productId && (
+                  <ReportButton targetType="product" targetId={productId} variant="text" />
+                )}
+              </div>
             </div>
             <div className="product-meta">
-              <div className="rating">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <span key={star}>
-                    {star <= 4 ? <Star className="star-filled" /> : <StarBorder />}
-                  </span>
-                ))}
-                <span className="review-count">(120 reviews)</span>
+              <div className="rating" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <StarRating value={productDetails.rating || 0} size={18} />
+                {productDetails.reviewCount > 0 ? (
+                  <>
+                    <span style={{ fontWeight: 600 }}>{(productDetails.rating || 0).toFixed(1)}</span>
+                    <span className="review-count">
+                      ({productDetails.reviewCount} review{productDetails.reviewCount > 1 ? 's' : ''})
+                    </span>
+                  </>
+                ) : (
+                  <span className="review-count">No reviews yet</span>
+                )}
               </div>
               <div className="stock-status">
                 <Verified className="in-stock-icon" />
@@ -272,13 +299,11 @@ const ProductDetails: React.FC = () => {
           </div>
 
           <div className="product-pricing">
-            <div className="price">
-              <h2>₹{productDetails.price}</h2>
-              {productDetails.originalPrice && (
-                <span className="original-price">₹{productDetails.originalPrice}</span>
-              )}
+            <PriceDisplay price={productDetails.price} mrp={productDetails.mrp} variant="detail" />
+            <div style={{ marginTop: '0.6rem' }}>
+              <StockBadge stock={productDetails.stock} isAvailable={productDetails.isAvailable} />
             </div>
-            <div className="price-tags">
+            <div className="price-tags" style={{ marginTop: '0.75rem' }}>
               <span className="price-tag">
                 <LocalOffer /> Free Delivery
               </span>
@@ -289,20 +314,39 @@ const ProductDetails: React.FC = () => {
           </div>
 
           <div className="product-options">
-            <div className="size-selection">
-              <h3>Select Size</h3>
-              <div className="size-grid">
-                {['S', 'M', 'L', 'XL', 'XXL'].map((size) => (
-                  <button
-                    key={size}
-                    className={`size-btn ${selectedSize === size ? 'selected' : ''}`}
-                    onClick={() => setSelectedSize(size)}
-                  >
-                    {size}
-                  </button>
-                ))}
+            {productDetails.sizes?.length > 0 && (
+              <div className="size-selection">
+                <h3>Select Size</h3>
+                <div className="size-grid">
+                  {productDetails.sizes.map((size: string) => (
+                    <button
+                      key={size}
+                      className={`size-btn ${selectedSize === size ? 'selected' : ''}`}
+                      onClick={() => setSelectedSize(size)}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {productDetails.colors?.length > 0 && (
+              <div className="size-selection">
+                <h3>Select Color</h3>
+                <div className="size-grid">
+                  {productDetails.colors.map((color: string) => (
+                    <button
+                      key={color}
+                      className={`size-btn ${selectedColor === color ? 'selected' : ''}`}
+                      onClick={() => setSelectedColor(color)}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="quantity-selection">
               <h3>Quantity</h3>
@@ -354,10 +398,11 @@ const ProductDetails: React.FC = () => {
                 rel="noopener noreferrer"
                 className="ad-card"
               >
-                <img 
-                  src={ad.images?.[0] || 'https://via.placeholder.com/400x300?text=Promo'} 
-                  alt={ad.title || 'Promotion'} 
+                <SafeImage
+                  src={ad.images?.[0]}
+                  alt={ad.title || 'Promotion'}
                   className="ad-image"
+                  preset="AD"
                 />
                 <div className="ad-content">
                   <div>
@@ -391,6 +436,20 @@ const ProductDetails: React.FC = () => {
           <button className="promo-btn">Copy Code</button>
         </div>
       </div>
+
+      {/* Reviews Section */}
+      {productId && (
+        <ReviewSection
+          targetType="product"
+          targetId={productId}
+          averageRating={productDetails.rating || 0}
+          reviewCount={productDetails.reviewCount || 0}
+          ownerId={shopDetails?.owner}
+          onAggregateChanged={() => {
+            getProductDetails(productId).then(setProductDetails).catch(() => {});
+          }}
+        />
+      )}
 
       {/* Suggestions Section */}
       <section className="suggestions-section">
@@ -429,7 +488,7 @@ const ProductDetails: React.FC = () => {
                 className="product-card"
               >
                 <div className="product-card-image">
-                  <img src={product.images[0]} alt={product.name} />
+                  <SafeImage src={product.images[0]} alt={product.name} preset="CARD" />
                 </div>
                 <div className="product-card-info">
                   <h3>{product.name}</h3>

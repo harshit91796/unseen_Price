@@ -1,10 +1,12 @@
 import axios from 'axios';
 
 // Base URL for your API
-const API_BASE_URL = 'https://d31i0zfjth34gl.cloudfront.net/api'; 
+// const API_BASE_URL = 'https://d31i0zfjth34gl.cloudfront.net/api'; 
 
 // Local URL for development
 // const API_BASE_URL = 'http://localhost:3000/api';
+
+const API_BASE_URL = 'http://unseenbackend-env.eba-zsxmdfw9.ap-south-1.elasticbeanstalk.com/api';
 
 // Create an axios instance with default config
 const api = axios.create({
@@ -491,6 +493,64 @@ export const searchShops = async (query: string) => {
   }
 };
 
+// Service Offering APIs
+export const createService = async (serviceData: {
+  name: string;
+  description: string;
+  price: number;
+  priceType: string;
+  duration?: string;
+  category?: string;
+  serviceType: string;
+  images: string[];
+  isAvailable: boolean;
+  bookingRequired: boolean;
+  shopId: string;
+}) => {
+  try {
+    const response = await api.post('/service/create-service', serviceData);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getShopServices = async (shopId: string) => {
+  try {
+    const response = await api.get(`/service/services/shop/${shopId}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getServiceDetails = async (serviceId: string) => {
+  try {
+    const response = await api.get(`/service/services/${serviceId}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const updateService = async (serviceId: string, updatedData: any) => {
+  try {
+    const response = await api.put(`/service/update-service/${serviceId}`, updatedData);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const searchServices = async (query: string) => {
+  try {
+    const response = await api.get(`/service/filter?${query}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
 // Wishlist APIs
 export const addToWishlist = async (productId?: string, shopId?: string) => {
   try {
@@ -601,6 +661,7 @@ export const getAdvertisementNearby = async (params?: {
   latitude?: number;
   state?: string;
   city?: string;
+  category?: string;
 }) => {
   try {
     const search = new URLSearchParams();
@@ -608,6 +669,7 @@ export const getAdvertisementNearby = async (params?: {
     if (params?.latitude != null) search.set('latitude', String(params.latitude));
     if (params?.state) search.set('state', params.state);
     if (params?.city) search.set('city', params.city);
+    if (params?.category) search.set('category', params.category);
     const qs = search.toString();
     const url = qs ? `/admin/advertisement/nearby?${qs}` : '/admin/advertisement/nearby';
     const response = await api.get(url);
@@ -717,6 +779,35 @@ export const deleteProduct = async (productId: string) => {
   }
 };
 
+// Admin: Services APIs
+export const getAdminServices = async (queryParams?: string) => {
+  try {
+    const url = queryParams ? `/admin/services?${queryParams}` : '/admin/services';
+    const response = await api.get(url);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const updateServiceStatus = async (serviceId: string, isActive: boolean) => {
+  try {
+    const response = await api.put(`/admin/services/${serviceId}/status`, { isActive });
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const deleteServiceAdmin = async (serviceId: string) => {
+  try {
+    const response = await api.delete(`/admin/services/${serviceId}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
 // Admin: Categories APIs
 export const getAdminCategories = async () => {
   try {
@@ -748,6 +839,227 @@ export const updateCategory = async (categoryId: string, categoryData: { name?: 
 export const deleteCategory = async (categoryId: string) => {
   try {
     const response = await api.delete(`/admin/category/${categoryId}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+// ============================
+// Email verification
+// ============================
+
+export const verifyEmail = async (token: string) => {
+  try {
+    const response = await api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const resendVerificationEmail = async (email: string) => {
+  try {
+    const response = await api.post('/auth/resend-verification', { email });
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+// ============================
+// Payments (Razorpay)
+// ============================
+
+export const createPaymentOrder = async (planId: 'pro' | 'business') => {
+  try {
+    const response = await api.post('/payment/create-order', { planId });
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const verifyPayment = async (data: {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}) => {
+  try {
+    const response = await api.post('/payment/verify', data);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+// ============================
+// Subscriptions & Plans
+// ============================
+
+export const getPlans = async () => {
+  try {
+    const response = await api.get('/subscription/plans');
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getMySubscription = async () => {
+  try {
+    const response = await api.get('/subscription/me');
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getSubscriptionHistory = async () => {
+  try {
+    const response = await api.get('/subscription/history');
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const cancelSubscription = async () => {
+  try {
+    const response = await api.post('/subscription/cancel');
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+// ============================
+// Reviews & Ratings
+// ============================
+
+export type ReviewTargetType = 'shop' | 'product' | 'service';
+
+export const submitReview = async (data: {
+  targetType: ReviewTargetType;
+  targetId: string;
+  rating: number;
+  comment?: string;
+}) => {
+  try {
+    const response = await api.post('/review/create', data);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getReviewsForTarget = async (
+  targetType: ReviewTargetType,
+  targetId: string,
+  page = 1,
+  limit = 10
+) => {
+  try {
+    const response = await api.get(`/review/target/${targetType}/${targetId}?page=${page}&limit=${limit}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getMyReviewForTarget = async (targetType: ReviewTargetType, targetId: string) => {
+  try {
+    const response = await api.get(`/review/my/target/${targetType}/${targetId}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const updateReview = async (
+  reviewId: string,
+  data: { rating?: number; comment?: string }
+) => {
+  try {
+    const response = await api.put(`/review/${reviewId}`, data);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const deleteReview = async (reviewId: string) => {
+  try {
+    const response = await api.delete(`/review/${reviewId}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+// ============================
+// Reports & Moderation Inbox
+// ============================
+
+export const submitReport = async (data: {
+  targetType: 'shop' | 'product' | 'service';
+  targetId: string;
+  reason: 'illegal' | 'inappropriate' | 'scam' | 'fake' | 'spam' | 'copyright' | 'other';
+  comment?: string;
+}) => {
+  try {
+    const response = await api.post('/report/create', data);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getAdminReports = async (queryParams?: string) => {
+  try {
+    const url = queryParams ? `/report/admin/all?${queryParams}` : '/report/admin/all';
+    const response = await api.get(url);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const resolveReport = async (reportId: string, action: 'safe' | 'deactivate' | 'delete' | 'ban') => {
+  try {
+    const response = await api.put(`/report/admin/${reportId}/resolve`, { action });
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getNewListings = async (queryParams?: string) => {
+  try {
+    const url = queryParams ? `/report/admin/new-listings?${queryParams}` : '/report/admin/new-listings';
+    const response = await api.get(url);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const moderateListing = async (data: {
+  targetType: 'shop' | 'product' | 'service';
+  targetId: string;
+  action: 'safe' | 'deactivate' | 'delete' | 'ban';
+}) => {
+  try {
+    const response = await api.post('/report/admin/moderate-listing', data);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const getModerationStats = async () => {
+  try {
+    const response = await api.get('/report/admin/stats');
     return response.data;
   } catch (error: unknown) {
     throw error;

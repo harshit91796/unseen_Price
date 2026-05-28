@@ -1,0 +1,93 @@
+.price-display {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.price-current {
+  font-weight: 700;
+  color: #059669;
+}
+
+.price-display.card .price-current {
+  font-size: 1.1rem;
+}
+
+.price-display.detail .price-current {
+  font-size: 1.8rem;
+  color: #111827;
+}
+
+.price-suffix {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.price-display.detail .price-suffix {
+  font-size: 1rem;
+}
+
+.price-mrp {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.price-display.detail .price-mrp {
+  font-size: 1.1rem;
+}
+
+.price-discount {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
+.price-display.detail .price-discount {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.6rem;
+}
+
+.price-savings {
+  flex-basis: 100%;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  color: #059669;
+  font-weight: 500;
+}
+
+/* ===== StockBadge ===== */
+.stock-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.18rem 0.55rem;
+  border-radius: 12px;
+  letter-spacing: 0.2px;
+}
+
+.stock-badge.in {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.stock-badge.low {
+  background: #fef3c7;
+  color: #b45309;
+  animation: stock-pulse 2s ease-in-out infinite;
+}
+
+.stock-badge.out {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+@keyframes stock-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
