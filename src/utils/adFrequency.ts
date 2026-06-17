@@ -92,3 +92,14 @@ export const getImpressionCount = (adId: string): number => {
 export const clearFrequencyData = (): void => {
   writeStore({ date: todayKey(), counts: {} });
 };
+
+/**
+ * Mark an ad as dismissed by the user — fills its impression count up to
+ * the cap so the filter automatically excludes it for the rest of the day.
+ */
+export const dismissAd = (adId: string, cap: number = DEFAULT_DAILY_CAP): void => {
+  if (!adId) return;
+  const store = readStore();
+  store.counts[adId] = Math.max(store.counts[adId] || 0, cap);
+  writeStore(store);
+};

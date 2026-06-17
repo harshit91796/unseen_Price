@@ -616,8 +616,44 @@
   transition: transform 0.3s ease;
 }
 
+.ad-card-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
 .ad-card:hover {
   transform: translateY(-5px);
+}
+
+.ad-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  padding: 0;
+}
+
+.ad-card:hover .ad-dismiss {
+  opacity: 1;
+}
+
+.ad-dismiss:hover {
+  background: rgba(0, 0, 0, 0.85);
 }
 
 .ad-image {

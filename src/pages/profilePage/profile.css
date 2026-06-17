@@ -222,6 +222,26 @@
   text-decoration: underline;
 }
 
+/* ===== Similar businesses nearby (native ads on shop profile) ===== */
+.nearby-ads-section {
+  max-width: 1200px;
+  margin: 2rem auto 3rem;
+  padding: 0 1rem;
+}
+
+.nearby-ads-heading {
+  font-size: 1.25rem;
+  margin: 0 0 1rem 0;
+  color: #111827;
+  font-weight: 600;
+}
+
+.nearby-ads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
 @media (max-width: 600px) {
   .shop-info-details {
     grid-template-columns: 1fr;

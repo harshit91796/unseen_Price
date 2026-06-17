@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import './searchPage.css';
-import { Search, FilterList, Favorite, FavoriteBorder, Store, ShoppingBag, LocationOn, MyLocation, LocationOff, RoomService, Schedule, EventAvailable } from '@mui/icons-material';
+import { Search, FilterList, Favorite, FavoriteBorder, Store, ShoppingBag, LocationOn, MyLocation, LocationOff, RoomService, Schedule, EventAvailable, Close } from '@mui/icons-material';
 import SafeImage from '../../components/SafeImage/SafeImage';
 import StarRating from '../../components/Reviews/StarRating';
 import PriceDisplay from '../../components/Price/PriceDisplay';
@@ -10,7 +10,9 @@ import { searchShops, searchProducts, searchServices, addToWishlist, removeFromW
 import { toast } from 'react-toastify';
 import { Slider } from '@mui/material';
 import { calculateDistance, formatDistance } from '../../utils/distance';
-import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency';
+import { filterByFrequencyCap, recordImpressions, dismissAd } from '../../utils/adFrequency';
+import SponsoredTag from '../../components/AdTags/SponsoredTag';
+import InlineAdCard from '../../components/InlineAdCard/InlineAdCard';
 
 interface Shop {
   _id: string;
@@ -167,7 +169,7 @@ const SearchPage = () => {
   const [citySearch, setCitySearch] = useState('');
 
   const ADS_PER_VIEW = 3;
-  const ROTATION_INTERVAL = 5000; // 5 seconds
+  const ROTATION_INTERVAL = 7000; // 7 seconds — slowed for readability
 
   useEffect(() => {
     console.log("catogoryParams",catogoryParams);
@@ -210,6 +212,9 @@ const SearchPage = () => {
 
   // Re-fetch ads when location OR active category changes (so ads match what user is browsing)
   useEffect(() => {
+    // Backend requires location — wait for userLocation before firing the request
+    // (otherwise the first call errors with 400 and leaves the ads pane empty).
+    if (!userLocation?.coordinates?.latitude || !userLocation?.state) return;
     fetchAdvertisements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation, filters.category, catogoryParams.category]);
@@ -250,6 +255,13 @@ const SearchPage = () => {
     setVisibleLeftAds(leftAds.slice(0, ADS_PER_VIEW));
     setVisibleRightAds(rightAds.slice(0, ADS_PER_VIEW));
   }, [leftAds, rightAds]);
+
+  // Record an impression ONLY for the ads actually on screen right now.
+  // Without this, we'd burn the daily cap by recording every ad in the pool.
+  useEffect(() => {
+    const onScreen = [...visibleLeftAds, ...visibleRightAds].filter(a => a?._id);
+    if (onScreen.length > 0) recordImpressions(onScreen);
+  }, [visibleLeftAds, visibleRightAds]);
 
   // Persist radius settings to localStorage
   useEffect(() => {
@@ -332,8 +344,8 @@ const SearchPage = () => {
 
       setLeftAds(leftColumn);
       setRightAds(rightColumn);
-      // Record impressions for ads we're about to display in either column
-      recordImpressions(finalAds);
+      // Impressions are recorded by the effect below — only for ads that
+      // are CURRENTLY visible (left + right sidebar slots), not the whole pool.
     } catch (error) {
       console.error('Failed to fetch advertisements:', error);
       setLeftAds([]);
@@ -726,36 +738,54 @@ const SearchPage = () => {
         <div className="vertical-ads-container">
           {visibleLeftAds.length > 0 ? (
             visibleLeftAds.map((ad) => (
-              <a 
-                key={ad._id}
-                href={ad.link || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="vertical-ad-card"
-              >
-                <SafeImage
-                  src={ad.images?.[0]}
-                  alt={ad.title || 'Promotion'}
-                  className="vertical-ad-image"
-                  preset="AD"
-                />
-                <div className="vertical-ad-content">
-                  <div>
-                    <h3>{ad.title}</h3>
-                    <p>{ad.description}</p>
+              <div key={ad._id} className="vertical-ad-card" style={{ position: 'relative' }}>
+                <SponsoredTag />
+                <button
+                  type="button"
+                  className="vertical-ad-dismiss"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dismissAd(ad._id);
+                    // Remove from visible immediately for instant feedback
+                    setVisibleLeftAds(prev => prev.filter(x => x._id !== ad._id));
+                    setLeftAds(prev => prev.filter(x => x._id !== ad._id));
+                  }}
+                  aria-label="Hide this ad"
+                  title="Don't show this ad again today"
+                >
+                  <Close fontSize="small" />
+                </button>
+                <a
+                  href={ad.link || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="vertical-ad-link"
+                >
+                  <SafeImage
+                    src={ad.images?.[0]}
+                    alt={ad.title || 'Promotion'}
+                    className="vertical-ad-image"
+                    preset="AD"
+                  />
+                  <div className="vertical-ad-content">
+                    <div>
+                      <h3>{ad.title}</h3>
+                      <p>{ad.description}</p>
+                    </div>
+                    <div className="vertical-ad-location">
+                      <LocationOn />
+                      <span>
+                        {ad.targeting?.targetType === 'GLOBAL'
+                          ? 'Available Everywhere'
+                          : ad.targeting?.targetType === 'STATE'
+                          ? `Available in ${ad.targeting?.state || ''}`
+                          : `Available in ${ad.targeting?.city || ''}`}
+                      </span>
+                    </div>
                   </div>
-                  <div className="vertical-ad-location">
-                    <LocationOn />
-                    <span>
-                      {ad.targeting?.targetType === 'GLOBAL' 
-                        ? 'Available Everywhere'
-                        : ad.targeting?.targetType === 'STATE'
-                        ? `Available in ${ad.targeting?.state || ''}`
-                        : `Available in ${ad.targeting?.city || ''}`}
-                    </span>
-                  </div>
-                </div>
-              </a>
+                </a>
+              </div>
             ))
           ) : (
             <div className="no-ads">No advertisements available</div>
@@ -1103,8 +1133,9 @@ const SearchPage = () => {
                 .filter(
                   (shop) => shop && shop.isDeleted !== true && shop.isActive !== false
                 )
-                .map((shop) => (
-                <div key={shop._id} className="shop-card-search">
+                .map((shop, idx) => (
+                <React.Fragment key={shop._id}>
+                <div className="shop-card-search">
                   <div 
                     className="shop-favorite-search"
                     onClick={(e) => {
@@ -1144,6 +1175,21 @@ const SearchPage = () => {
                     </div>
                   </Link>
                 </div>
+                {/* Native inline ad — every 8 results, picked from leftAds */}
+                {(idx + 1) % 8 === 0 && leftAds.length > 0 && (() => {
+                  const ad = leftAds[Math.floor(idx / 8) % leftAds.length];
+                  return (
+                    <InlineAdCard
+                      ad={ad}
+                      variant="shop"
+                      onDismiss={(adId) => {
+                        dismissAd(adId);
+                        setLeftAds(prev => prev.filter(x => x._id !== adId));
+                      }}
+                    />
+                  );
+                })()}
+                </React.Fragment>
               ))
             ) : (
               <div className="no-results">No shops found</div>
@@ -1155,7 +1201,7 @@ const SearchPage = () => {
             ).length > 0 ? (
               searchResults.services
                 .filter((s) => s && s.isDeleted !== true && s.isActive !== false)
-                .map((service) => {
+                .map((service, idx) => {
                   const priceLabelMap: Record<string, string> = {
                     fixed: '',
                     starting_from: 'Starting from',
@@ -1166,7 +1212,8 @@ const SearchPage = () => {
                   };
                   const priceLabel = priceLabelMap[service.priceType] || '';
                   return (
-                    <div key={service._id} className="service-card-search">
+                    <React.Fragment key={service._id}>
+                    <div className="service-card-search">
                       <Link to={`/serviceDetails/${service._id}`}>
                         <SafeImage
                           src={service.images?.[0]}
@@ -1209,6 +1256,20 @@ const SearchPage = () => {
                         </div>
                       </Link>
                     </div>
+                    {(idx + 1) % 8 === 0 && leftAds.length > 0 && (() => {
+                      const ad = leftAds[Math.floor(idx / 8) % leftAds.length];
+                      return (
+                        <InlineAdCard
+                          ad={ad}
+                          variant="service"
+                          onDismiss={(adId) => {
+                            dismissAd(adId);
+                            setLeftAds(prev => prev.filter(x => x._id !== adId));
+                          }}
+                        />
+                      );
+                    })()}
+                    </React.Fragment>
                   );
                 })
             ) : (
@@ -1224,8 +1285,9 @@ const SearchPage = () => {
                 (product) =>
                   product && product.isDeleted !== true && product.isActive !== false
               )
-              .map((product) => (
-              <div key={product._id} className="product-card-search">
+              .map((product, idx) => (
+              <React.Fragment key={product._id}>
+              <div className="product-card-search">
                 <div 
                   className="product-favorite-search"
                   onClick={(e) => {
@@ -1287,6 +1349,20 @@ const SearchPage = () => {
                   </div>
                 </Link>
               </div>
+              {(idx + 1) % 8 === 0 && leftAds.length > 0 && (() => {
+                const ad = leftAds[Math.floor(idx / 8) % leftAds.length];
+                return (
+                  <InlineAdCard
+                    ad={ad}
+                    variant="product"
+                    onDismiss={(adId) => {
+                      dismissAd(adId);
+                      setLeftAds(prev => prev.filter(x => x._id !== adId));
+                    }}
+                  />
+                );
+              })()}
+              </React.Fragment>
             ))
           ) : (
             <div className="no-results">No products found</div>
@@ -1380,47 +1456,9 @@ const SearchPage = () => {
         </div>
       </div>
 
-      {/* Right Ads */}
-      <div className="vertical-ads">
-        <div className="vertical-ads-container">
-          {visibleRightAds.length > 0 ? (
-            visibleRightAds.map((ad) => (
-              <a 
-                key={ad._id}
-                href={ad.link || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="vertical-ad-card"
-              >
-                <SafeImage
-                  src={ad.images?.[0]}
-                  alt={ad.title || 'Promotion'}
-                  className="vertical-ad-image"
-                  preset="AD"
-                />
-                <div className="vertical-ad-content">
-                  <div>
-                    <h3>{ad.title}</h3>
-                    <p>{ad.description}</p>
-                  </div>
-                  <div className="vertical-ad-location">
-                    <LocationOn />
-                    <span>
-                      {ad.targeting?.targetType === 'GLOBAL' 
-                        ? 'Available Everywhere'
-                        : ad.targeting?.targetType === 'STATE'
-                        ? `Available in ${ad.targeting?.state || ''}`
-                        : `Available in ${ad.targeting?.city || ''}`}
-                    </span>
-                  </div>
-                </div>
-              </a>
-            ))
-          ) : (
-            <div className="no-ads">No advertisements available</div>
-          )}
-        </div>
-      </div>
+      {/* Right sidebar removed — its ads were redundant with the left sidebar and
+          made the search results feel cramped. Right-column inventory is now
+          surfaced as native inline ads interspersed in the results grid above. */}
     </div>
   );
 };

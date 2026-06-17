@@ -6,6 +6,7 @@ import { getAdvertisementNearby } from '../../Api';
 import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency';
 import { LocationOn, ArrowBack, ArrowForward } from '@mui/icons-material';
 import SafeImage from '../../components/SafeImage/SafeImage';
+import SponsoredTag from '../../components/AdTags/SponsoredTag';
 interface Advertisement {
   _id: string;
   title: string;
@@ -37,8 +38,8 @@ interface UserLocation {
 }
 
 const ADS_PER_PAGE = 3;
-const ROTATION_INTERVAL = 5000;
-const BANNER_ROTATION_INTERVAL = 3000;
+const ROTATION_INTERVAL = 7000;            // sidebar ads — was 5s, bumped to 7s for readability
+const BANNER_ROTATION_INTERVAL = 7000;     // banner — was 3s (way too fast for reading), now 7s
 
 const Feed = () => {
  
@@ -55,8 +56,20 @@ const Feed = () => {
   }, []);
 
   useEffect(() => {
+    // Wait until we actually have a location before calling the ad endpoint.
+    // The backend requires longitude/latitude/state and errors out without them,
+    // which would wipe the ads list on every initial mount.
+    if (!userLocation?.coordinates?.latitude || !userLocation?.state) return;
     fetchAdvertisements();
   }, [userLocation]);
+
+  // Record an impression for the banner ad that is actually visible right now.
+  // Re-runs when the rotation moves to the next ad or when the banner list refreshes.
+  // This way one home-page visit costs 1 impression per ad on screen, not 5 at once.
+  useEffect(() => {
+    const current = bannerAds[currentBannerIndex];
+    if (current?._id) recordImpressions([current]);
+  }, [currentBannerIndex, bannerAds]);
 
   const getUserLocation = async () => {
     try {
@@ -135,10 +148,10 @@ const Feed = () => {
       const finalAds = cappedAds.length > 0 ? cappedAds : activeAds;
 
       setAdvertisements(finalAds);
-      const bannerSelection = finalAds.slice(0, 5);
-      setBannerAds(bannerSelection);
-      // Record one impression for each ad we're about to display
-      recordImpressions(bannerSelection);
+      setBannerAds(finalAds.slice(0, 5));
+      // Impressions are recorded by the rotation effect below — only for the
+      // ad currently visible, not the whole pool. This prevents the frequency
+      // cap from being exhausted in a single visit.
     } catch (error) {
       console.error('Error in fetchAdvertisements:', error);
       setAdvertisements([]);
@@ -240,7 +253,8 @@ const Feed = () => {
         <div className="banner-content">
           {bannerAds.length > 0 ? (
             <div className="banner-ad">
-              <a 
+              <SponsoredTag />
+              <a
                 href={bannerAds[currentBannerIndex].link || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -253,13 +267,16 @@ const Feed = () => {
                     <div className="banner-ad-location">
                       <LocationOn />
                       <span>
-                        {bannerAds[currentBannerIndex].targeting?.targetType === 'GLOBAL' 
+                        {bannerAds[currentBannerIndex].targeting?.targetType === 'GLOBAL'
                           ? 'Available Everywhere'
                           : bannerAds[currentBannerIndex].targeting?.targetType === 'STATE'
                           ? `Available in ${bannerAds[currentBannerIndex].targeting?.state || ''}`
                           : `Available in ${bannerAds[currentBannerIndex].targeting?.city || ''}`}
                       </span>
                     </div>
+                    <button type="button" className="banner-ad-cta">
+                      Visit <ArrowForward fontSize="small" />
+                    </button>
                   </div>
                   <div className="banner-ad-image">
                     <SafeImage
@@ -298,21 +315,18 @@ const Feed = () => {
               )}
             </div>
           ) : (
-            // Fallback banner content
+            // Fallback hero — shown when no ads are available for the user's location
             <div className="banner-text">
-              <h1>Reflect Who You Are with Our <span className="accent-text">Style</span></h1>
+              <h1>Discover Local <span className="accent-text">Shops & Services</span> Near You</h1>
               <p>
-                The power of a great outfit is impossible to overstate. At its best, 
-                fashion has the ability to transform your mood, identity, and of course, 
-                your look. It can be fun, refreshing, and purposeful.
+                From boutiques and salons to clinics and restaurants — find what your
+                neighbourhood has to offer. Compare prices, read reviews, and support
+                local businesses.
               </p>
               <div className="brands">
-                <span>Our Brand Partners: </span>
-                <div className="brand-images">
-                  {[images.product1, images.product2, images.product3, images.product4].map((image, index) => (
-                    <img key={index} className='brand-image' src={image} alt={`Brand ${index + 1}`} />
-                  ))}
-                </div>
+                <Link to="/search/all" className="banner-explore-cta">
+                  Start exploring <ArrowForward fontSize="small" />
+                </Link>
               </div>
             </div>
           )}

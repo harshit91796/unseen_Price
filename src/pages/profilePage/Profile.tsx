@@ -3,7 +3,9 @@ import './profile.css';
 import { Edit, AccessTime, LocationOn, Phone, Category, Store, Delete, RoomService, Schedule, EventAvailable } from '@mui/icons-material';
 import { Link, useParams } from 'react-router-dom';
 // import { shopeImages } from '../../Pictures';
-import { getShopDetails, getShopProducts, getShopServices, updateShop, updateProduct, updateService } from '../../Api';
+import { getShopDetails, getShopProducts, getShopServices, updateShop, updateProduct, updateService, getAdvertisementNearby } from '../../Api';
+import InlineAdCard from '../../components/InlineAdCard/InlineAdCard';
+import { filterByFrequencyCap, recordImpressions, dismissAd } from '../../utils/adFrequency';
 import ShopEditModal from './edit modal/shopEditModal';
 import ConfirmationModal from '../../components/ConfirmationModal/ConfirmationModal';
 import { toast } from 'react-toastify';
@@ -32,6 +34,8 @@ const Profile = () => {
   const [shopDetails, setShopDetails] = useState<any>(null);
   const [shopProducts, setShopProducts] = useState<any[]>([]);
   const [shopServices, setShopServices] = useState<any[]>([]);
+  // "Similar businesses nearby" ad row shown at the bottom of the profile
+  const [nearbyAds, setNearbyAds] = useState<any[]>([]);
   const [filteredServices, setFilteredServices] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('mens');
   const [activeFilter, setActiveFilter] = useState('All');
@@ -81,6 +85,42 @@ const Profile = () => {
     };
     loadInventory();
   }, [shopDetails, currentPage]);
+
+  // Fetch "similar businesses nearby" ads using the shop's own location + category
+  useEffect(() => {
+    if (!shopDetails?.targeting?.coordinates || !shopDetails?.address?.state) return;
+    (async () => {
+      try {
+        const ads = await getAdvertisementNearby({
+          longitude: shopDetails.targeting.coordinates[0],
+          latitude: shopDetails.targeting.coordinates[1],
+          state: shopDetails.address.state,
+          city: shopDetails.address.city,
+          category: shopDetails.category?.name
+        });
+        const valid = (Array.isArray(ads) ? ads : []).filter((a: any) => {
+          if (!a) return false;
+          if (a._id === shopDetails._id) return false; // never show the shop's own ad on its own page
+          const active = a.isActive && !a.isDeleted;
+          const inDate =
+            (!a.startDate || new Date(a.startDate) <= new Date()) &&
+            (!a.endDate || new Date(a.endDate) >= new Date());
+          return active && inDate;
+        });
+        const capped = filterByFrequencyCap(valid);
+        const finalAds = capped.length > 0 ? capped : valid;
+        setNearbyAds(finalAds.slice(0, 3));
+      } catch (e) {
+        console.error('Failed to load nearby ads on shop profile:', e);
+        setNearbyAds([]);
+      }
+    })();
+  }, [shopDetails?._id]);
+
+  // Record impression for the ad slots we actually rendered
+  useEffect(() => {
+    if (nearbyAds.length > 0) recordImpressions(nearbyAds);
+  }, [nearbyAds]);
 
   const ShopDetails = async () => {
     try {
@@ -874,6 +914,26 @@ const Profile = () => {
             ownerId={shopDetails.owner}
             onAggregateChanged={ShopDetails}
           />
+        </section>
+      )}
+
+      {/* Similar businesses nearby — native ad row */}
+      {nearbyAds.length > 0 && (
+        <section className="nearby-ads-section">
+          <h2 className="nearby-ads-heading">Similar businesses nearby</h2>
+          <div className="nearby-ads-grid">
+            {nearbyAds.map((ad) => (
+              <InlineAdCard
+                key={ad._id}
+                ad={ad}
+                variant="shop"
+                onDismiss={(adId) => {
+                  dismissAd(adId);
+                  setNearbyAds(prev => prev.filter(x => x._id !== adId));
+                }}
+              />
+            ))}
+          </div>
         </section>
       )}
 

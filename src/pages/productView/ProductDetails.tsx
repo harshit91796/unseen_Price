@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import './ProductDetails.css';
 import ImageModal from '../../components/imageModal/ImageModal';
-import { 
-  Star, 
-  StarBorder, 
-  LocalShipping, 
+import {
+  Star,
+  StarBorder,
+  LocalShipping,
   Verified,
   LocalOffer,
   ArrowForward,
   AddShoppingCart,
   LocationOn,
   Store,
-  Edit
+  Edit,
+  Close
 } from '@mui/icons-material';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getProductDetails, getAdvertisementNearby, getShopDetails, updateProduct } from '../../Api';
@@ -23,7 +24,8 @@ import SafeImage from '../../components/SafeImage/SafeImage';
 import ReviewSection from '../../components/Reviews/ReviewSection';
 import StarRating from '../../components/Reviews/StarRating';
 import ShareButton from '../../components/ShareButton/ShareButton';
-import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency';
+import { filterByFrequencyCap, recordImpressions, dismissAd } from '../../utils/adFrequency';
+import SponsoredTag from '../../components/AdTags/SponsoredTag';
 import VariantPicker from '../../components/VariantPicker/VariantPicker';
 import { computePriceInfo, stockLabel, stockBand, totalStock } from '../../utils/pricing';
 import PriceDisplay from '../../components/Price/PriceDisplay';
@@ -49,7 +51,7 @@ interface Advertisement {
   isDeleted: boolean;
 }
 
-const ROTATION_INTERVAL = 5000; // 5 seconds
+const ROTATION_INTERVAL = 7000; // 7 seconds — slowed for readability
 const ADS_PER_VIEW = 3;
 
 const ProductDetails: React.FC = () => {
@@ -78,6 +80,9 @@ const ProductDetails: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // Wait for location — backend errors out without it
+    if (!userLocation?.coordinates?.latitude || !userLocation?.state) return;
+
     const fetchAds = async () => {
       try {
         // Use the product's category so the ads match what the user is viewing
@@ -104,9 +109,8 @@ const ProductDetails: React.FC = () => {
         const finalAds = cappedAds.length > 0 ? cappedAds : activeAds;
 
         setAdvertisements(finalAds);
-        const visible = finalAds.slice(0, ADS_PER_VIEW);
-        setVisibleAds(visible);
-        recordImpressions(visible);
+        setVisibleAds(finalAds.slice(0, ADS_PER_VIEW));
+        // Impressions are recorded by the effect below for only the visible ads
       } catch (error) {
         console.error('Failed to fetch advertisements:', error);
         setAdvertisements([]);
@@ -133,6 +137,12 @@ const ProductDetails: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [advertisements]);
+
+  // Record impressions only for ads actually visible on screen — avoids burning
+  // the frequency cap on the entire candidate pool.
+  useEffect(() => {
+    if (visibleAds.length > 0) recordImpressions(visibleAds);
+  }, [visibleAds]);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -410,36 +420,53 @@ const ProductDetails: React.FC = () => {
         <div className="ads-grid">
           {visibleAds.length > 0 ? (
             visibleAds.map((ad) => (
-              <a 
-                key={ad._id}
-                href={ad.link || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ad-card"
-              >
-                <SafeImage
-                  src={ad.images?.[0]}
-                  alt={ad.title || 'Promotion'}
-                  className="ad-image"
-                  preset="AD"
-                />
-                <div className="ad-content">
-                  <div>
-                    <h3>{ad.title}</h3>
-                    <p>{ad.description}</p>
+              <div key={ad._id} className="ad-card" style={{ position: 'relative' }}>
+                <SponsoredTag />
+                <button
+                  type="button"
+                  className="ad-dismiss"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dismissAd(ad._id);
+                    setVisibleAds(prev => prev.filter(x => x._id !== ad._id));
+                    setAdvertisements(prev => prev.filter(x => x._id !== ad._id));
+                  }}
+                  aria-label="Hide this ad"
+                  title="Don't show this ad again today"
+                >
+                  <Close fontSize="small" />
+                </button>
+                <a
+                  href={ad.link || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ad-card-link"
+                >
+                  <SafeImage
+                    src={ad.images?.[0]}
+                    alt={ad.title || 'Promotion'}
+                    className="ad-image"
+                    preset="AD"
+                  />
+                  <div className="ad-content">
+                    <div>
+                      <h3>{ad.title}</h3>
+                      <p>{ad.description}</p>
+                    </div>
+                    <div className="ad-location">
+                      <LocationOn />
+                      <span>
+                        {ad.targeting?.targetType === 'GLOBAL'
+                          ? 'Available Everywhere'
+                          : ad.targeting?.targetType === 'STATE'
+                          ? `Available in ${ad.targeting?.state || ''}`
+                          : `Available in ${ad.targeting?.city || ''}`}
+                      </span>
+                    </div>
                   </div>
-                  <div className="ad-location">
-                    <LocationOn />
-                    <span>
-                      {ad.targeting?.targetType === 'GLOBAL' 
-                        ? 'Available Everywhere'
-                        : ad.targeting?.targetType === 'STATE'
-                        ? `Available in ${ad.targeting?.state || ''}`
-                        : `Available in ${ad.targeting?.city || ''}`}
-                    </span>
-                  </div>
-                </div>
-              </a>
+                </a>
+              </div>
             ))
           ) : (
             <div className="no-ads">No advertisements available</div>

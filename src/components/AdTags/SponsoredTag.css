@@ -1,0 +1,26 @@
+.sponsored-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  border-radius: 12px;
+  z-index: 3;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* On top of images: dark semi-transparent so always readable */
+.sponsored-tag.overlay {
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+}
+
+/* On light backgrounds (e.g. detail page ad sections) */
+.sponsored-tag.light {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
