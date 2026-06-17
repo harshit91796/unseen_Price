@@ -1,0 +1,139 @@
+.variant-picker {
+  margin: 1rem 0;
+}
+
+.variant-picker-section {
+  margin-bottom: 1rem;
+}
+
+.variant-picker-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.2px;
+}
+
+.variant-picker-selected {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.variant-picker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.variant-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 0.55rem 1rem;
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.variant-chip:hover:not(:disabled) {
+  border-color: #667eea;
+  color: #4338ca;
+}
+
+.variant-chip.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.variant-chip.sold-out,
+.variant-chip.missing {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #9ca3af;
+}
+
+.variant-chip-strike {
+  position: absolute;
+  top: 50%;
+  left: 8%;
+  right: 8%;
+  height: 1.5px;
+  background: #9ca3af;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
+.variant-picker-feedback {
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.variant-picker-feedback.unavailable {
+  background: #fef2f2;
+  color: #991b1b;
+  display: block;
+  margin: 0;
+}
+
+.variant-picker-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.variant-picker-price {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.variant-picker-mrp {
+  font-size: 1rem;
+  color: #6b7280;
+  text-decoration: line-through;
+}
+
+.variant-picker-discount {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.variant-picker-stock {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.25rem 0.7rem;
+  border-radius: 20px;
+}
+
+.variant-picker-stock.band-in_stock {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.variant-picker-stock.band-low {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.variant-picker-stock.band-out_of_stock {
+  background: #fee2e2;
+  color: #991b1b;
+}

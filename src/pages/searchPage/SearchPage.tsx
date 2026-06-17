@@ -10,6 +10,7 @@ import { searchShops, searchProducts, searchServices, addToWishlist, removeFromW
 import { toast } from 'react-toastify';
 import { Slider } from '@mui/material';
 import { calculateDistance, formatDistance } from '../../utils/distance';
+import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency';
 
 interface Shop {
   _id: string;
@@ -318,15 +319,21 @@ const SearchPage = () => {
         return isActiveAndNotDeleted && isWithinDateRange;
       });
 
+      // Apply daily-impression cap; fall back to all-ads if cap empties the list
+      const cappedAds = filterByFrequencyCap(activeAds);
+      const finalAds = cappedAds.length > 0 ? cappedAds : activeAds;
+
       const leftColumn: Advertisement[] = [];
       const rightColumn: Advertisement[] = [];
-      activeAds.forEach((ad, index) => {
+      finalAds.forEach((ad, index) => {
         if (index % 2 === 0) leftColumn.push(ad);
         else rightColumn.push(ad);
       });
 
       setLeftAds(leftColumn);
       setRightAds(rightColumn);
+      // Record impressions for ads we're about to display in either column
+      recordImpressions(finalAds);
     } catch (error) {
       console.error('Failed to fetch advertisements:', error);
       setLeftAds([]);
@@ -1242,7 +1249,22 @@ const SearchPage = () => {
                   <div className="product-info-search">
                     <h3>{product.name}</h3>
                     <div style={{ margin: '0 0 0.5rem 0' }}>
-                      <PriceDisplay price={product.price} mrp={product.mrp} variant="card" />
+                      {(() => {
+                        const variants = (product as any).variants as any[] | undefined;
+                        if (Array.isArray(variants) && variants.length > 0) {
+                          const prices = variants.map(v => v.price).filter(p => p > 0);
+                          const mrps = variants.map(v => v.mrp).filter((m: number) => m > 0);
+                          const minPrice = Math.min(...prices);
+                          const lowestMrp = mrps.length ? Math.min(...mrps) : null;
+                          return (
+                            <>
+                              <span style={{ fontSize: '0.75rem', color: '#6b7280', display: 'block', marginBottom: 2 }}>From</span>
+                              <PriceDisplay price={minPrice} mrp={lowestMrp} variant="card" />
+                            </>
+                          );
+                        }
+                        return <PriceDisplay price={product.price} mrp={(product as any).mrp} variant="card" />;
+                      })()}
                     </div>
                     <div style={{ margin: '0 0 0.4rem 0' }}>
                       <StockBadge stock={product.stock} isAvailable={product.isAvailable} />

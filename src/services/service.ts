@@ -12,7 +12,7 @@ const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
 const supabaseKey = (import.meta as any).env?.VITE_SUPABASE_KEY
   
 
-const SUPABASE_BUCKET = 'ghosts';
+const SUPABASE_BUCKET = 'unseen_price';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 export { supabaseUrl, SUPABASE_BUCKET };

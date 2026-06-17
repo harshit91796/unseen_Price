@@ -23,6 +23,9 @@ import SafeImage from '../../components/SafeImage/SafeImage';
 import ReviewSection from '../../components/Reviews/ReviewSection';
 import StarRating from '../../components/Reviews/StarRating';
 import ShareButton from '../../components/ShareButton/ShareButton';
+import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency';
+import VariantPicker from '../../components/VariantPicker/VariantPicker';
+import { computePriceInfo, stockLabel, stockBand, totalStock } from '../../utils/pricing';
 import PriceDisplay from '../../components/Price/PriceDisplay';
 import StockBadge from '../../components/Price/StockBadge';
 
@@ -96,8 +99,14 @@ const ProductDetails: React.FC = () => {
           return isActiveAndNotDeleted && isWithinDateRange;
         });
 
-        setAdvertisements(activeAds);
-        setVisibleAds(activeAds.slice(0, ADS_PER_VIEW));
+        // Apply frequency cap; fall back to all ads if it empties the list
+        const cappedAds = filterByFrequencyCap(activeAds);
+        const finalAds = cappedAds.length > 0 ? cappedAds : activeAds;
+
+        setAdvertisements(finalAds);
+        const visible = finalAds.slice(0, ADS_PER_VIEW);
+        setVisibleAds(visible);
+        recordImpressions(visible);
       } catch (error) {
         console.error('Failed to fetch advertisements:', error);
         setAdvertisements([]);
@@ -300,9 +309,11 @@ const ProductDetails: React.FC = () => {
 
           <div className="product-pricing">
             <PriceDisplay price={productDetails.price} mrp={productDetails.mrp} variant="detail" />
-            <div style={{ marginTop: '0.6rem' }}>
-              <StockBadge stock={productDetails.stock} isAvailable={productDetails.isAvailable} />
-            </div>
+            {(!productDetails.variants || productDetails.variants.length === 0) && (
+              <div style={{ marginTop: '0.6rem' }}>
+                <StockBadge stock={productDetails.stock} isAvailable={productDetails.isAvailable} />
+              </div>
+            )}
             <div className="price-tags" style={{ marginTop: '0.75rem' }}>
               <span className="price-tag">
                 <LocalOffer /> Free Delivery
@@ -312,6 +323,14 @@ const ProductDetails: React.FC = () => {
               </span>
             </div>
           </div>
+
+          {/* Variant picker — shown only when this product has variants */}
+          {Array.isArray(productDetails.variants) && productDetails.variants.length > 0 && (
+            <VariantPicker
+              variants={productDetails.variants}
+              onChange={(v) => { /* selection broadcast — could wire to add-to-cart later */ void v; }}
+            />
+          )}
 
           <div className="product-options">
             {productDetails.sizes?.length > 0 && (

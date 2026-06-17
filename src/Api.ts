@@ -871,7 +871,7 @@ export const resendVerificationEmail = async (email: string) => {
 // Payments (Razorpay)
 // ============================
 
-export const createPaymentOrder = async (planId: 'pro' | 'business') => {
+export const createPaymentOrder = async (planId: 'starter' | 'pro' | 'business') => {
   try {
     const response = await api.post('/payment/create-order', { planId });
     return response.data;

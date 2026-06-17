@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { images, shopeImages } from '../../Pictures';
 import { useEffect, useState, useCallback } from 'react';
 import { getAdvertisementNearby } from '../../Api';
+import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency';
 import { LocationOn, ArrowBack, ArrowForward } from '@mui/icons-material';
 import SafeImage from '../../components/SafeImage/SafeImage';
 interface Advertisement {
@@ -128,8 +129,16 @@ const Feed = () => {
           (!ad.endDate || new Date(ad.endDate) >= new Date());
         return isActiveAndNotDeleted && isWithinDateRange;
       });
-      setAdvertisements(activeAds);
-      setBannerAds(activeAds.slice(0, 5));
+      // Frequency cap — hide ads this user has already seen too many times today.
+      // If the cap empties the list, fall back to showing all (better something than nothing).
+      const cappedAds = filterByFrequencyCap(activeAds);
+      const finalAds = cappedAds.length > 0 ? cappedAds : activeAds;
+
+      setAdvertisements(finalAds);
+      const bannerSelection = finalAds.slice(0, 5);
+      setBannerAds(bannerSelection);
+      // Record one impression for each ad we're about to display
+      recordImpressions(bannerSelection);
     } catch (error) {
       console.error('Error in fetchAdvertisements:', error);
       setAdvertisements([]);

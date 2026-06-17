@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Check, Star, AutoAwesome } from '@mui/icons-material';
+import { Check, Star, AutoAwesome, Schedule } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { getPlans, getMySubscription, createPaymentOrder, verifyPayment } from '../../Api';
 import { openRazorpayCheckout } from '../../utils/razorpayCheckout';
 import './pricingPage.css';
 
 interface Plan {
-  id: 'free' | 'pro' | 'business';
+  id: 'free' | 'starter' | 'pro' | 'business';
   name: string;
   price: number;
+  originalPrice: number | null;
   durationDays: number | null;
+  billingLabel: string;
   description: string;
-  marketingFeatures: string[];
+  marketingFeatures: string[];        // features delivered today
+  comingSoonFeatures?: string[];      // promised, not yet built
   features: any;
 }
 
@@ -43,7 +46,7 @@ const PricingPage: React.FC = () => {
     })();
   }, [user]);
 
-  const handleUpgrade = async (planId: 'pro' | 'business') => {
+  const handleUpgrade = async (planId: 'starter' | 'pro' | 'business') => {
     if (!user?._id) {
       toast.info('Please sign in to subscribe');
       navigate('/login');
@@ -127,8 +130,21 @@ const PricingPage: React.FC = () => {
                 <div className="pricing-price-row">
                   <span className="pricing-currency">₹</span>
                   <span className="pricing-amount">{plan.price}</span>
-                  {plan.price > 0 && <span className="pricing-period">/ month</span>}
                 </div>
+                {plan.billingLabel && (
+                  <p className="pricing-billing-label">{plan.billingLabel}</p>
+                )}
+                {plan.originalPrice && plan.originalPrice > plan.price && (
+                  <div className="pricing-launch-offer">
+                    <span className="pricing-launch-tag">LAUNCH OFFER</span>
+                    <span className="pricing-original">
+                      Regular: ₹{plan.originalPrice}
+                    </span>
+                    <span className="pricing-savings">
+                      Save ₹{plan.originalPrice - plan.price}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <ul className="pricing-features">
@@ -140,10 +156,27 @@ const PricingPage: React.FC = () => {
                 ))}
               </ul>
 
+              {plan.comingSoonFeatures && plan.comingSoonFeatures.length > 0 && (
+                <div className="pricing-coming-soon">
+                  <div className="pricing-coming-soon-header">
+                    <Schedule fontSize="small" />
+                    <span>Coming soon</span>
+                  </div>
+                  <ul className="pricing-coming-soon-list">
+                    {plan.comingSoonFeatures.map((feat, i) => (
+                      <li key={i}>
+                        <span className="pricing-coming-soon-dot">○</span>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <button
                 className={`pricing-cta ${isFeatured ? 'primary' : 'secondary'}`}
                 disabled={isCurrent || plan.id === 'free' || isUpgrading}
-                onClick={() => handleUpgrade(plan.id as 'pro' | 'business')}
+                onClick={() => handleUpgrade(plan.id as 'starter' | 'pro' | 'business')}
               >
                 {isCurrent ? 'Your plan'
                   : plan.id === 'free' ? 'Free forever'
@@ -157,8 +190,13 @@ const PricingPage: React.FC = () => {
 
       <div className="pricing-footnote">
         <p>
-          <Star fontSize="small" /> All paid plans are charged monthly. Cancel anytime — you keep
-          access until the end of your paid period. No pro-rated refunds.
+          <Schedule fontSize="small" /> <strong>About "Coming Soon" features:</strong> we ship
+          fast — these are on our roadmap and will be added automatically to your plan as they
+          launch. We won't charge extra. Today's payment locks in your tier.
+        </p>
+        <p style={{ marginTop: '0.5rem' }}>
+          <Star fontSize="small" /> Cancel anytime — you keep access until the end of your paid
+          period. See our <a href="/legal/refund">Refund & Cancellation Policy</a>.
         </p>
         <p style={{ marginTop: '0.5rem' }}>
           Need a custom plan for a larger business?{' '}

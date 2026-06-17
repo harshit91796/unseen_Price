@@ -16,6 +16,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { uploadImagesToSupabase, safeRevokeBlobUrl } from '../../services/service';
+import VariantEditor from '../../components/VariantEditor/VariantEditor';
 
 const AddNewProduct: React.FC = () => {
   const { shopId } = useParams();
@@ -34,10 +35,8 @@ const AddNewProduct: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState<boolean>(false);
   const [newCategory, setNewCategory] = useState<string>('');
-  const [sizes, setSizes] = useState<string[]>([]);
-  const [colors, setColors] = useState<string[]>([]);
-  const [sizeInput, setSizeInput] = useState('');
-  const [colorInput, setColorInput] = useState('');
+  const [hasVariants, setHasVariants] = useState<boolean>(false);
+  const [variants, setVariants] = useState<any[]>([]);
 
   const navigate = useNavigate();
 
@@ -81,24 +80,6 @@ const AddNewProduct: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const addSize = () => {
-    const trimmed = sizeInput.trim();
-    if (!trimmed) return;
-    if (sizes.includes(trimmed)) { setSizeInput(''); return; }
-    setSizes([...sizes, trimmed]);
-    setSizeInput('');
-  };
-  const removeSize = (s: string) => setSizes(sizes.filter(x => x !== s));
-
-  const addColor = () => {
-    const trimmed = colorInput.trim();
-    if (!trimmed) return;
-    if (colors.includes(trimmed)) { setColorInput(''); return; }
-    setColors([...colors, trimmed]);
-    setColorInput('');
-  };
-  const removeColor = (c: string) => setColors(colors.filter(x => x !== c));
-
   const handleAddProduct = async () => {
     if (!name || !description || !price || uploadedImages.length === 0) {
       toast.error('Please fill in all required fields and upload at least one image');
@@ -109,6 +90,44 @@ const AddNewProduct: React.FC = () => {
       return;
     }
 
+    // Variant validation
+    let cleanVariants: any[] = [];
+    if (hasVariants) {
+      if (variants.length === 0) {
+        toast.warning('Add at least one variant or uncheck "This product has size/color variants"');
+        return;
+      }
+      const seen = new Set<string>();
+      for (const v of variants) {
+        if (!v.size && !v.color) {
+          toast.error('Each variant must have at least a Size OR a Color');
+          return;
+        }
+        if (!v.price || v.price <= 0) {
+          toast.error('Each variant needs a valid price');
+          return;
+        }
+        if (v.mrp && v.mrp <= v.price) {
+          toast.warning(`Variant ${v.size || '-'} / ${v.color || '-'}: MRP must be higher than price (or leave empty)`);
+          return;
+        }
+        const key = `${(v.size || '').toLowerCase()}|${(v.color || '').toLowerCase()}`;
+        if (seen.has(key)) {
+          toast.error(`Duplicate variant: ${v.size || '—'} / ${v.color || '—'}`);
+          return;
+        }
+        seen.add(key);
+      }
+      cleanVariants = variants.map(v => ({
+        size: v.size?.trim() || null,
+        color: v.color?.trim() || null,
+        price: Number(v.price),
+        mrp: v.mrp > 0 ? Number(v.mrp) : null,
+        stock: Number(v.stock) || 0,
+        sku: v.sku?.trim() || ''
+      }));
+    }
+
     setIsSubmitting(true);
     try {
       const productData: any = {
@@ -116,8 +135,7 @@ const AddNewProduct: React.FC = () => {
         description,
         price,
         mrp: mrp > 0 ? mrp : null,
-        sizes,
-        colors,
+        variants: cleanVariants,
         productCategory: addedCategory || 'Extra',
         genderCategory: genderCategory || 'mens',
         images: [] as string[],
@@ -335,69 +353,24 @@ const AddNewProduct: React.FC = () => {
             )}
           </div>
 
-          {/* Variants — sizes & colors (optional, for clothing/shoes etc.) */}
+          {/* Variants — sizes & colors with per-combo price + stock */}
           <div className="form-group">
-            <h2>Variants <span style={{color:'#9ca3af', fontSize:'0.9rem', fontWeight:400}}>(optional — skip for products with no size/color)</span></h2>
-            <div className="form-grid">
-              <div className="form-field">
-                <label>Available Sizes</label>
-                <div style={{display:'flex', gap:'0.4rem'}}>
-                  <input
-                    type="text"
-                    value={sizeInput}
-                    onChange={(e) => setSizeInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSize(); } }}
-                    placeholder="e.g. S, M, L, 38, XL"
-                    className="form-input"
-                  />
-                  <button type="button" onClick={addSize} className="btn btn-secondary" style={{padding:'0.5rem 1rem'}}>Add</button>
-                </div>
-                <div style={{display:'flex', flexWrap:'wrap', gap:'0.4rem', marginTop:'0.5rem'}}>
-                  {sizes.map(s => (
-                    <span key={s} style={{
-                      display:'inline-flex', alignItems:'center', gap:'0.3rem',
-                      padding:'0.25rem 0.7rem', background:'#f0f1ff', color:'#4338ca',
-                      borderRadius:'16px', fontSize:'0.85rem', fontWeight:500
-                    }}>
-                      {s}
-                      <button type="button" onClick={() => removeSize(s)} style={{
-                        background:'transparent', border:'none', color:'#6b7280', cursor:'pointer',
-                        fontSize:'1rem', padding:0, lineHeight:1
-                      }}>×</button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="form-field">
-                <label>Available Colors</label>
-                <div style={{display:'flex', gap:'0.4rem'}}>
-                  <input
-                    type="text"
-                    value={colorInput}
-                    onChange={(e) => setColorInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addColor(); } }}
-                    placeholder="e.g. Red, Blue, Black"
-                    className="form-input"
-                  />
-                  <button type="button" onClick={addColor} className="btn btn-secondary" style={{padding:'0.5rem 1rem'}}>Add</button>
-                </div>
-                <div style={{display:'flex', flexWrap:'wrap', gap:'0.4rem', marginTop:'0.5rem'}}>
-                  {colors.map(c => (
-                    <span key={c} style={{
-                      display:'inline-flex', alignItems:'center', gap:'0.3rem',
-                      padding:'0.25rem 0.7rem', background:'#fef3c7', color:'#92400e',
-                      borderRadius:'16px', fontSize:'0.85rem', fontWeight:500
-                    }}>
-                      {c}
-                      <button type="button" onClick={() => removeColor(c)} style={{
-                        background:'transparent', border:'none', color:'#6b7280', cursor:'pointer',
-                        fontSize:'1rem', padding:0, lineHeight:1
-                      }}>×</button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <h2>Variants <span style={{ color: '#9ca3af', fontSize: '0.9rem', fontWeight: 400 }}>(optional — for clothing, shoes, etc.)</span></h2>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={hasVariants}
+                onChange={(e) => setHasVariants(e.target.checked)}
+              />
+              <span>This product has size and/or color options</span>
+            </label>
+            {hasVariants && (
+              <VariantEditor
+                variants={variants}
+                onChange={setVariants}
+                defaults={{ price, mrp }}
+              />
+            )}
           </div>
 
           {/* Description */}

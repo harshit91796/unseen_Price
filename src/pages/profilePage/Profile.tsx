@@ -437,19 +437,67 @@ const Profile = () => {
               </div>
             )}
             <div className="shop-info-details">
-              <p><LocationOn /> {shopDetails?.address?.city || 'Location not available'}</p>
-              <p>
-                <Phone />{' '}
-                {shopDetails?.contact?.phone
-                  || shopDetails?.contact?.email
-                  || (typeof shopDetails?.contact === 'string' ? shopDetails.contact : '')
-                  || 'Contact not available'}
+              {(() => {
+                const addr = shopDetails?.address;
+                const coords = shopDetails?.targeting?.coordinates;
+                const fullAddress = addr
+                  ? [addr.street, addr.city, addr.state, addr.zipCode, addr.country].filter(Boolean).join(', ')
+                  : '';
+                // Prefer coordinates for accuracy, fall back to address string
+                let mapsUrl: string | null = null;
+                if (Array.isArray(coords) && coords.length === 2 && (coords[0] || coords[1])) {
+                  mapsUrl = `https://www.google.com/maps?q=${coords[1]},${coords[0]}`;
+                } else if (fullAddress) {
+                  mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
+                }
+                const displayLocation = addr?.city
+                  ? `${addr.city}${addr.state ? ', ' + addr.state : ''}`
+                  : 'Location not available';
+                return (
+                  <p className="shop-detail-row">
+                    <LocationOn className="shop-detail-icon" />
+                    {mapsUrl ? (
+                      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="shop-detail-link" title="Open in Google Maps">
+                        {displayLocation}
+                      </a>
+                    ) : (
+                      <span>{displayLocation}</span>
+                    )}
+                  </p>
+                );
+              })()}
+
+              {(() => {
+                const phone = shopDetails?.contact?.phone || (typeof shopDetails?.contact === 'string' ? shopDetails.contact : '');
+                const email = shopDetails?.contact?.email;
+                const display = phone || email || 'Contact not available';
+                const isPhone = !!phone;
+                const isEmail = !phone && !!email;
+                return (
+                  <p className="shop-detail-row">
+                    <Phone className="shop-detail-icon" />
+                    {isPhone ? (
+                      <a href={`tel:${phone.replace(/\s+/g, '')}`} className="shop-detail-link" title="Call">{display}</a>
+                    ) : isEmail ? (
+                      <a href={`mailto:${email}`} className="shop-detail-link" title="Email">{display}</a>
+                    ) : (
+                      <span>{display}</span>
+                    )}
+                  </p>
+                );
+              })()}
+
+              <p className="shop-detail-row">
+                <AccessTime className="shop-detail-icon" />
+                <span>{shopDetails?.openTime} to {shopDetails?.closeTime}</span>
               </p>
-              <p><AccessTime /> {shopDetails?.openTime} to {shopDetails?.closeTime}</p>
-              <p><Category /> {shopDetails?.category?.name}</p>
-              <p>
-                {shopDetails?.type === 'service' ? <RoomService /> : <Store />}
-                {' '}Type: <span className="status-open">{shopDetails?.type === 'service' ? 'Service' : 'Shop'}</span>
+              <p className="shop-detail-row">
+                <Category className="shop-detail-icon" />
+                <span>{shopDetails?.category?.name}</span>
+              </p>
+              <p className="shop-detail-row">
+                {shopDetails?.type === 'service' ? <RoomService className="shop-detail-icon" /> : <Store className="shop-detail-icon" />}
+                <span>Type: <span className="status-open">{shopDetails?.type === 'service' ? 'Service' : 'Shop'}</span></span>
               </p>
             </div>
           </div>
@@ -692,7 +740,22 @@ const Profile = () => {
                     <div className="product-info">
                       <h3>{product.name}</h3>
                       <div style={{ margin: '0.3rem 0' }}>
-                        <PriceDisplay price={product.price} mrp={product.mrp} variant="card" />
+                        {(() => {
+                          const variants = (product as any).variants as any[] | undefined;
+                          if (Array.isArray(variants) && variants.length > 0) {
+                            const prices = variants.map((v: any) => v.price).filter((p: number) => p > 0);
+                            const mrps = variants.map((v: any) => v.mrp).filter((m: number) => m > 0);
+                            const minPrice = Math.min(...prices);
+                            const lowestMrp = mrps.length ? Math.min(...mrps) : null;
+                            return (
+                              <>
+                                <span style={{ fontSize: '0.7rem', color: '#6b7280', display: 'block' }}>From</span>
+                                <PriceDisplay price={minPrice} mrp={lowestMrp} variant="card" />
+                              </>
+                            );
+                          }
+                          return <PriceDisplay price={product.price} mrp={product.mrp} variant="card" />;
+                        })()}
                       </div>
                       <div>
                         <StockBadge stock={product.stock} isAvailable={product.isAvailable} />

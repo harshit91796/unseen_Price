@@ -6,7 +6,7 @@ import { getMySubscription, cancelSubscription } from '../../Api';
 import './MySubscription.css';
 
 interface SubscriptionInfo {
-  currentPlanId: 'free' | 'pro' | 'business';
+  currentPlanId: 'free' | 'starter' | 'pro' | 'business';
   expiresAt: string | null;
   startedAt: string | null;
   plan: {
@@ -113,18 +113,7 @@ const MySubscription: React.FC = () => {
           <span>Services</span>
           <strong>{usage.services} / {fmtLimit(plan.features.maxServicesPerShop)} per business</strong>
         </div>
-        <div className="my-sub-usage-row">
-          <span>Verified badge</span>
-          <strong>{plan.features.verifiedBadge ? '✓ Yes' : '—'}</strong>
-        </div>
-        <div className="my-sub-usage-row">
-          <span>Analytics</span>
-          <strong>{plan.features.analytics ? '✓ Yes' : '—'}</strong>
-        </div>
-        <div className="my-sub-usage-row">
-          <span>Featured slots / month</span>
-          <strong>{plan.features.featuredSlotsPerMonth || 0}</strong>
-        </div>
+        {/* Verified badge / Analytics / Featured slots are coming soon — hidden until built */}
       </div>
 
       {isPaid && (
