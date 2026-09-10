@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Auth and account pages hold nothing useful for search results
+Disallow: /oauth-callback
+Disallow: /verify-email
+Disallow: /admin/
+Disallow: /AdminDashboard
+Disallow: /setup/
+Disallow: /profile-setup/
+Disallow: /conversations
+Disallow: /conversation/
+
+Sitemap: https://www.unseenprice.com/sitemap.xml
