@@ -1,12 +1,22 @@
 import axios from 'axios';
 
-// Base URL for your API
-const API_BASE_URL = 'https://d5b9akbtsrkat.cloudfront.net/api'; 
+// ---------------------------------------------------------------------------
+// Backend API location.
+//
+// Set VITE_API_URL in .env (local) or in the deploy workflow (production).
+// Do NOT hardcode a new URL here. Hardcoding is how this file ended up pointing
+// at the static-site S3 bucket instead of the API, which broke login on the
+// live site: every request got HTML or a 405 back instead of a JSON response.
+//
+// The value is the backend ORIGIN, with no trailing /api.
+// ---------------------------------------------------------------------------
+const DEFAULT_API_ORIGIN = 'https://d5b9akbtsrkat.cloudfront.net';
 
-// Local URL for development
-// const API_BASE_URL = 'http://localhost:3000/api';
+export const API_ORIGIN = String(
+  (import.meta as any).env?.VITE_API_URL || DEFAULT_API_ORIGIN
+).replace(/\/+$/, '');
 
-// const API_BASE_URL = 'http://unseenbackend-env.eba-zsxmdfw9.ap-south-1.elasticbeanstalk.com/api';
+export const API_BASE_URL = `${API_ORIGIN}/api`;
 
 // Create an axios instance with default config
 const api = axios.create({

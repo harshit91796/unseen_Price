@@ -1,6 +1,6 @@
 import './feed.css';
 import { Link } from 'react-router-dom';
-import { images, shopeImages } from '../../Pictures';
+import { shopeImages } from '../../Pictures';
 import { useEffect, useState, useCallback } from 'react';
 import { getAdvertisementNearby } from '../../Api';
 import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency';

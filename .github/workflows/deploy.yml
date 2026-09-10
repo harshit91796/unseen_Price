@@ -25,7 +25,7 @@ jobs:
         run: npm run build
         env:
           # Put your environment variables here if they are not in .env
-          VITE_API_URL: https://d2m00zvvxio8.cloudfront.net 
+          VITE_API_URL: https://d5b9akbtsrkat.cloudfront.net
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -39,4 +39,4 @@ jobs:
         run: aws s3 sync dist/ s3://unseenpricebucket --delete
 
       - name: Invalidate CloudFront Cache
-        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --paths "/*"
+        run: aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_DISTRIBUTION_ID }} --paths "/*"

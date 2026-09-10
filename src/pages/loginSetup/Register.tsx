@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register, sendOtp, verifyOtp } from '../../Api';
+import { register, sendOtp, verifyOtp, API_BASE_URL } from '../../Api';
 import { useAppDispatch } from '../../redux/hooks/hooks';
 import { setUser } from '../../redux/user/userSlice';
 import './Auth.css';
@@ -63,7 +63,7 @@ const Register: React.FC = () => {
   };
 
   const handleOAuthRegister = (provider: string) => {
-    window.location.href = `${process.env.REACT_APP_API_URL}/auth/${provider}`;
+    window.location.href = `${API_BASE_URL}/auth/${provider}`;
   };
 
   return (
@@ -237,4 +237,4 @@ const Register: React.FC = () => {
   );
 };
 
-export default Register;
+export default Register;

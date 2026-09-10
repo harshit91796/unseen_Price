@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { login, sendOtp, verifyOtp } from '../../Api';
+import { login, sendOtp, verifyOtp, API_BASE_URL } from '../../Api';
 import { useAppDispatch } from '../../redux/hooks/hooks';
 import { setUser } from '../../redux/user/userSlice';
 import './Auth.css';
@@ -92,7 +92,7 @@ const Login: React.FC = () => {
   };
 
   const handleOAuthLogin = (provider: string) => {
-    window.location.href = `http://localhost:3000/api/auth/${provider}`;
+    window.location.href = `${API_BASE_URL}/auth/${provider}`;
 
     
   };
@@ -175,4 +175,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default Login;
