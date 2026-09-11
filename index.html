@@ -40,8 +40,9 @@
     <meta property="twitter:image" content="https://www.unseenprice.com/og-image.png" />
     <meta property="twitter:image:alt" content="Unseen Price" />
     
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://www.unseenprice.com" />
+    <!-- Canonical URL: intentionally NOT set here. Every route serves this same
+         file, so a fixed canonical would mark every page as a copy of the
+         homepage. src/hooks/usePageMeta.ts injects the correct one per page. -->
     
     <!-- Additional SEO -->
     <meta name="theme-color" content="#007bff" />

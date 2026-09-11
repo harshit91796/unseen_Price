@@ -19,6 +19,7 @@ import ReviewSection from '../../components/Reviews/ReviewSection';
 import StarRating from '../../components/Reviews/StarRating';
 import ShareButton from '../../components/ShareButton/ShareButton';
 import PriceDisplay from '../../components/Price/PriceDisplay';
+import usePageMeta from '../../hooks/usePageMeta';
 
 const PRICE_TYPE_LABELS: Record<string, string> = {
   fixed: '',
@@ -34,6 +35,18 @@ const ServiceDetail: React.FC = () => {
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+
+  // Must stay above the early "Loading..." returns below (hooks cannot be conditional).
+  const metaShopName = service?.shopId && typeof service.shopId === 'object' ? service.shopId.name : undefined;
+  usePageMeta({
+    title: service?.name
+      ? `${service.name}${metaShopName ? ` at ${metaShopName}` : ''}`
+      : 'Service',
+    description: service?.description,
+    image: service?.images?.[0],
+    path: `/serviceDetails/${serviceId}`,
+    noindex: (!loading && !service) || service?.isDeleted === true || service?.isActive === false,
+  });
 
   useEffect(() => {
     const fetchService = async () => {

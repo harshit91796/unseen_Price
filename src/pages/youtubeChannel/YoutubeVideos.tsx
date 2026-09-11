@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './YoutubeVideos.module.css';
 import { videoImages } from '../../Pictures';
 import { FaYoutube, FaFilter, FaSearch } from 'react-icons/fa';
+import usePageMeta from '../../hooks/usePageMeta';
 
 interface Video {
   id: string;
@@ -15,6 +16,11 @@ interface Video {
 }
 
 const YoutubeVideos: React.FC = () => {
+  usePageMeta({
+    title: 'Videos',
+    description: 'Watch videos about local shops, products and deals near you on Unseen Price.',
+    path: '/videos',
+  });
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');

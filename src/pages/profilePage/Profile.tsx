@@ -18,6 +18,7 @@ import StarRating from '../../components/Reviews/StarRating';
 import ShareButton from '../../components/ShareButton/ShareButton';
 import PriceDisplay from '../../components/Price/PriceDisplay';
 import StockBadge from '../../components/Price/StockBadge';
+import usePageMeta from '../../hooks/usePageMeta';
 
 interface PaginationInfo {
   page: number;
@@ -57,6 +58,23 @@ const Profile = () => {
     isOpen: false,
     productId: null,
     productName: '',
+  });
+
+  // Shop pages are the most valuable search results, e.g. "HD Boys in Bhopal".
+  const metaCity = shopDetails?.address?.city;
+  const metaKind = shopDetails?.type === 'service' ? 'services' : 'products';
+  usePageMeta({
+    title: shopDetails?.name
+      ? `${shopDetails.name}${metaCity ? ` in ${metaCity}` : ''}`
+      : 'Local Shop',
+    description: shopDetails?.description
+      || (shopDetails?.name
+        ? `${shopDetails.name}${metaCity ? ` in ${metaCity}` : ''} on Unseen Price. Browse ${metaKind}, prices and reviews.`
+        : undefined),
+    image: shopDetails?.images?.[0],
+    path: `/shop/${shopId}`,
+    // A shop that failed to load, was removed, or is disabled must not be indexed.
+    noindex: (!loading && !shopDetails) || shopDetails?.isDeleted === true || shopDetails?.isActive === false,
   });
 
   useEffect(() => {

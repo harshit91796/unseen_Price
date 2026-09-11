@@ -1,7 +1,8 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowBack } from '@mui/icons-material';
 import './LegalPageLayout.css';
+import usePageMeta from '../../hooks/usePageMeta';
 
 interface LegalPageLayoutProps {
   title: string;
@@ -14,6 +15,14 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({
   lastUpdated,
   children,
 }) => {
+  // One layout serves all four legal pages, so the path comes from the URL.
+  const { pathname } = useLocation();
+  usePageMeta({
+    title,
+    description: `Read the ${title} for Unseen Price. Last updated ${lastUpdated}.`,
+    path: pathname,
+  });
+
   return (
     <div className="legal-page">
       <div className="legal-page-container">

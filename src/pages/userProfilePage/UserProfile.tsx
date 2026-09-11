@@ -27,6 +27,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { uploadImagesToSupabase } from '../../services/service';
 import SafeImage from '../../components/SafeImage/SafeImage';
 import MySubscription from '../../components/MySubscription/MySubscription';
+import usePageMeta from '../../hooks/usePageMeta';
 
 interface UserData {
   data: {
@@ -69,6 +70,7 @@ interface ShopData {
 }
 
 const UserProfile = () => {
+  usePageMeta({ title: 'My Profile', noindex: true });
   const user = useSelector((state: any) => state.user.user);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('shops');

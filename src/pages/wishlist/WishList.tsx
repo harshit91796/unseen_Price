@@ -4,6 +4,7 @@ import styles from './WishList.module.css';
 import { Favorite, Store, ShoppingBag, LocationOn, StoreMallDirectory } from '@mui/icons-material';
 import { getWishlist, removeFromWishlist } from '../../Api';
 import { toast } from 'react-toastify';
+import usePageMeta from '../../hooks/usePageMeta';
 
 interface Shop {
   _id: string;
@@ -37,6 +38,7 @@ interface WishlistData {
 }
 
 const WishList: React.FC = () => {
+  usePageMeta({ title: 'My Wishlist', noindex: true });
   const [activeTab, setActiveTab] = useState<'shops' | 'products'>('shops');
   const [wishlistData, setWishlistData] = useState<WishlistData>({ products: [], shops: [] });
   const [loading, setLoading] = useState(true);

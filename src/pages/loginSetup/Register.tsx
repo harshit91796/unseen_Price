@@ -6,8 +6,14 @@ import { setUser } from '../../redux/user/userSlice';
 import './Auth.css';
 import logo from '../../assets/images/l2.png';
 import { FaGoogle, FaFacebook, FaApple, FaTwitter } from 'react-icons/fa';
+import usePageMeta from '../../hooks/usePageMeta';
 
 const Register: React.FC = () => {
+  usePageMeta({
+    title: 'Create an Account',
+    description: 'Sign up for Unseen Price to list your shop or service business for free, or save your favourite local finds.',
+    path: '/register',
+  });
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [step, setStep] = useState(1);

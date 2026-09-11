@@ -15,6 +15,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { uploadImagesToSupabase, safeRevokeBlobUrl } from '../../services/service';
+import usePageMeta from '../../hooks/usePageMeta';
 
 const SERVICE_TYPES = [
   'restaurant', 'cafe', 'catering', 'food-delivery',
@@ -38,6 +39,7 @@ const PRICE_TYPES = [
 ];
 
 const AddService: React.FC = () => {
+  usePageMeta({ title: 'Add Service', noindex: true });
   const { shopId } = useParams();
   const [shopDetails, setShopDetails] = useState<any>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);

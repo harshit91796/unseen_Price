@@ -6,8 +6,14 @@ import { setUser } from '../../redux/user/userSlice';
 import './Auth.css';
 import { FaGoogle, FaFacebook } from 'react-icons/fa';
 import logo from '../../assets/images/l2.png';
+import usePageMeta from '../../hooks/usePageMeta';
 
 const Login: React.FC = () => {
+  usePageMeta({
+    title: 'Log In',
+    description: 'Log in to Unseen Price to save favourite local shops, manage your business and list products.',
+    path: '/login',
+  });
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');

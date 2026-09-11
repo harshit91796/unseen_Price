@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { getPlans, getMySubscription, createPaymentOrder, verifyPayment } from '../../Api';
 import { openRazorpayCheckout } from '../../utils/razorpayCheckout';
 import './pricingPage.css';
+import usePageMeta from '../../hooks/usePageMeta';
 
 interface Plan {
   id: 'free' | 'starter' | 'pro' | 'business';
@@ -21,6 +22,11 @@ interface Plan {
 }
 
 const PricingPage: React.FC = () => {
+  usePageMeta({
+    title: 'Pricing for Shops & Service Businesses',
+    description: 'List your shop or service business on Unseen Price. Start free with up to 15 listings, or upgrade for more shops, listings and storage.',
+    path: '/pricing',
+  });
   const user = useSelector((state: any) => state.user.user);
   const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);

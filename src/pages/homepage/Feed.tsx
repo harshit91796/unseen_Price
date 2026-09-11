@@ -7,6 +7,7 @@ import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency
 import { LocationOn, ArrowBack, ArrowForward } from '@mui/icons-material';
 import SafeImage from '../../components/SafeImage/SafeImage';
 import SponsoredTag from '../../components/AdTags/SponsoredTag';
+import usePageMeta from '../../hooks/usePageMeta';
 interface Advertisement {
   _id: string;
   title: string;
@@ -42,6 +43,8 @@ const ROTATION_INTERVAL = 7000;            // sidebar ads — was 5s, bumped to 
 const BANNER_ROTATION_INTERVAL = 7000;     // banner — was 3s (way too fast for reading), now 7s
 
 const Feed = () => {
+  // Homepage keeps the site-wide default title and description from index.html.
+  usePageMeta({ path: '/' });
  
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [bannerAds, setBannerAds] = useState<Advertisement[]>([]);

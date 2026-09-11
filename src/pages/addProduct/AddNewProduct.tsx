@@ -17,8 +17,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { uploadImagesToSupabase, safeRevokeBlobUrl } from '../../services/service';
 import VariantEditor from '../../components/VariantEditor/VariantEditor';
+import usePageMeta from '../../hooks/usePageMeta';
 
 const AddNewProduct: React.FC = () => {
+  usePageMeta({ title: 'Add Product', noindex: true });
   const { shopId } = useParams();
   const [shopDetails, setShopDetails] = useState<any>(null);
   const [addedCategory, setAddedCategory] = useState<string>('');

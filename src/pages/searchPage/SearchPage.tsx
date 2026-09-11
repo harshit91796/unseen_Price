@@ -10,6 +10,7 @@ import { searchShops, searchProducts, searchServices, addToWishlist, removeFromW
 import { toast } from 'react-toastify';
 import { Slider } from '@mui/material';
 import { calculateDistance, formatDistance } from '../../utils/distance';
+import usePageMeta from '../../hooks/usePageMeta';
 import { filterByFrequencyCap, recordImpressions, dismissAd } from '../../utils/adFrequency';
 import SponsoredTag from '../../components/AdTags/SponsoredTag';
 import InlineAdCard from '../../components/InlineAdCard/InlineAdCard';
@@ -124,6 +125,20 @@ interface Advertisement {
 
 const SearchPage = () => {
   const catogoryParams = useParams();
+
+  // Each category is its own search result, e.g. "Jewelry Near You | Unseen Price".
+  const metaCategory = catogoryParams.category;
+  const isAllCategories = !metaCategory || metaCategory.toLowerCase() === 'all';
+  usePageMeta({
+    title: isAllCategories
+      ? 'Search Local Shops, Products & Services Near You'
+      : `${metaCategory} Near You`,
+    description: isAllCategories
+      ? 'Search local shops, products and services near you. Compare prices and discover nearby businesses on Unseen Price.'
+      : `Browse local ${metaCategory.toLowerCase()} listings near you. Compare prices and discover nearby shops and services on Unseen Price.`,
+    // encodeURIComponent matches the encoding used in public/sitemap.xml.
+    path: `/search/${encodeURIComponent(metaCategory || 'all')}`,
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [searchType, setSearchType] = useState<'shops' | 'products' | 'services'>('shops');

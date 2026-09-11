@@ -30,6 +30,7 @@ import VariantPicker from '../../components/VariantPicker/VariantPicker';
 import { computePriceInfo, stockLabel, stockBand, totalStock } from '../../utils/pricing';
 import PriceDisplay from '../../components/Price/PriceDisplay';
 import StockBadge from '../../components/Price/StockBadge';
+import usePageMeta from '../../hooks/usePageMeta';
 
 interface Advertisement {
   _id: string;
@@ -70,6 +71,19 @@ const ProductDetails: React.FC = () => {
   const [userLocation, setUserLocation] = useState<any>(null);
   const [shopDetails, setShopDetails] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Must stay above the early returns further down (hooks cannot be conditional).
+  const metaShopName = shopDetails?.name;
+  usePageMeta({
+    title: productDetails?.name
+      ? `${productDetails.name}${metaShopName ? ` at ${metaShopName}` : ''}`
+      : 'Product',
+    description: productDetails?.description,
+    image: productDetails?.images?.[0],
+    path: `/productDetails/${productId}`,
+    noindex: (!loading && !productDetails) || !!error
+      || productDetails?.isDeleted === true || productDetails?.isActive === false,
+  });
 
   useEffect(() => {
     // Get user location from localStorage
