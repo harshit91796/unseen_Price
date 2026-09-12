@@ -125,7 +125,7 @@ const AdminInbox: React.FC = () => {
   const handleListingAction = async (item: NewListingItem, action: Action) => {
     if (action === 'delete' || action === 'ban') {
       const ok = window.confirm(action === 'ban'
-        ? 'Ban the owner of this listing? This will disable their account.'
+        ? 'Ban the owner of this listing?\n\nThey will be signed out and blocked from logging back in, and every shop, product and service they own will be hidden. Nothing is deleted, so this can be undone from User Management.'
         : 'Permanently delete this listing?');
       if (!ok) return;
     }
@@ -149,7 +149,7 @@ const AdminInbox: React.FC = () => {
   const handleReportAction = async (report: ReportItem, action: Action) => {
     if (action === 'delete' || action === 'ban') {
       const ok = window.confirm(action === 'ban'
-        ? 'Ban the owner of the reported listing?'
+        ? 'Ban the owner of the reported listing?\n\nThey will be signed out and blocked from logging back in, and every shop, product and service they own will be hidden. Nothing is deleted, so this can be undone from User Management.'
         : 'Permanently delete the reported listing?');
       if (!ok) return;
     }

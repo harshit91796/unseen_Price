@@ -721,6 +721,19 @@ export const updateUserRole = async (userId: string, role: string) => {
   }
 };
 
+/**
+ * Ban or unban a user. Banning hides every shop, product and service they own;
+ * unbanning restores exactly what the ban hid. Nothing is deleted either way.
+ */
+export const setUserBanStatus = async (userId: string, isBanned: boolean, reason?: string) => {
+  try {
+    const response = await api.put(`/admin/users/${userId}/ban`, { isBanned, reason });
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
 export const deleteUser = async (userId: string) => {
   try {
     const response = await api.delete(`/admin/users/${userId}`);

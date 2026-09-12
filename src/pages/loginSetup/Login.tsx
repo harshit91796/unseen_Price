@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { login, sendOtp, verifyOtp, API_BASE_URL } from '../../Api';
 import { useAppDispatch } from '../../redux/hooks/hooks';
 import { setUser } from '../../redux/user/userSlice';
@@ -25,6 +25,14 @@ const Login: React.FC = () => {
   });
   const [error, setError] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  // Social login cannot show an error inline: the backend redirects here with the
+  // reason attached, which is how a banned account learns why it was refused.
+  useEffect(() => {
+    const redirectError = searchParams.get('error');
+    if (redirectError) setError(redirectError);
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

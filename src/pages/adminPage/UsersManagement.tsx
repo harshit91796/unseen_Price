@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { People, Delete, Edit, Search, FilterList } from '@mui/icons-material';
+import { People, Delete, Edit, Search, FilterList, Block, LockOpen } from '@mui/icons-material';
 import { toast } from 'react-toastify';
-import { getAdminUsers, updateUserRole, deleteUser } from '../../Api';
+import { getAdminUsers, updateUserRole, deleteUser, setUserBanStatus } from '../../Api';
 import { useDebounce } from '../../hooks/useDebounce';
 import styles from './AdminDashboard.module.css';
 
@@ -12,6 +12,9 @@ interface User {
   phone?: string;
   role: string;
   createdAt: string;
+  isBanned?: boolean;
+  bannedAt?: string;
+  banReason?: string;
 }
 
 interface Pagination {
@@ -98,6 +101,42 @@ const UsersManagement: React.FC = () => {
       setEditingRole(null);
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to update user role');
+    }
+  };
+
+  const handleToggleBan = async (user: User) => {
+    const banning = !user.isBanned;
+
+    let reason: string | undefined;
+    if (banning) {
+      const answer = window.prompt(
+        `Ban "${user.name}"?\n\n` +
+        'They will be signed out and blocked from logging back in. Every shop, ' +
+        'product and service they own will be hidden from the site.\n\n' +
+        'Nothing is deleted, so unbanning puts it all back.\n\n' +
+        'Reason (shown in the admin list):',
+        'Violated marketplace rules'
+      );
+      if (answer === null) return;          // cancelled
+      reason = answer.trim() || undefined;
+    } else if (!window.confirm(
+      `Unban "${user.name}"?\n\n` +
+      'They will be able to log in again, and the listings hidden by the ban will go back online.'
+    )) {
+      return;
+    }
+
+    try {
+      const result = await setUserBanStatus(user._id, banning, reason);
+      const counts = banning ? result?.hidden : result?.restored;
+      const summary = counts
+        ? ` (${counts.shops} shops, ${counts.products} products, ${counts.services} services)`
+        : '';
+      toast.success(`${banning ? 'Banned' : 'Unbanned'} ${user.name}${summary}`);
+      fetchUsers();
+    } catch (error: any) {
+      const res = error.response?.data;
+      toast.error(res?.message || res?.error || `Failed to ${banning ? 'ban' : 'unban'} user`);
     }
   };
 
@@ -208,6 +247,7 @@ const UsersManagement: React.FC = () => {
               <th>Email</th>
               <th>Phone</th>
               <th>Role</th>
+              <th>Status</th>
               <th>Created At</th>
               <th>Actions</th>
             </tr>
@@ -241,6 +281,16 @@ const UsersManagement: React.FC = () => {
                       <span className={styles.roleBadge}>{user.role}</span>
                     )}
                   </td>
+                  <td>
+                    <span
+                      className={`${styles.statusBadge} ${user.isBanned ? styles.statusBadgeBanned : ''}`}
+                    >
+                      {user.isBanned ? 'Banned' : 'Active'}
+                    </span>
+                    {user.isBanned && user.banReason && (
+                      <span className={styles.banReason}>{user.banReason}</span>
+                    )}
+                  </td>
                   <td>{new Date(user.createdAt).toLocaleDateString()}</td>
                   <td>
                     <div className={styles.actionButtons}>
@@ -251,6 +301,15 @@ const UsersManagement: React.FC = () => {
                       >
                         <Edit />
                       </button>
+                      {user.role !== 'admin' && (
+                        <button
+                          className={user.isBanned ? styles.activateButton : styles.deactivateButton}
+                          onClick={() => handleToggleBan(user)}
+                          title={user.isBanned ? 'Unban this account and restore their listings' : 'Ban this account and hide their listings'}
+                        >
+                          {user.isBanned ? <LockOpen /> : <Block />}
+                        </button>
+                      )}
                       <button
                         className={styles.deleteButton}
                         onClick={() => handleDeleteUser(user._id, user.name)}
@@ -264,7 +323,7 @@ const UsersManagement: React.FC = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className={styles.noData}>
+                <td colSpan={7} className={styles.noData}>
                   No users found
                 </td>
               </tr>

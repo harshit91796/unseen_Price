@@ -774,6 +774,30 @@
   color: #4338ca;
 }
 
+/* Account status shown in the users table */
+.statusBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.statusBadgeBanned {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.banReason {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  color: #6b7280;
+  max-width: 220px;
+}
+
 .actionButtons {
   display: flex;
   gap: 0.5rem;

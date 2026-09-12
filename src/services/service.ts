@@ -12,7 +12,9 @@ const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
 const supabaseKey = (import.meta as any).env?.VITE_SUPABASE_KEY
   
 
-const SUPABASE_BUCKET = 'unseen_price';
+// Bucket name is configurable so it can never drift from the project URL again.
+// Default matches the bucket every existing image lives in.
+const SUPABASE_BUCKET = (import.meta as any).env?.VITE_SUPABASE_BUCKET || 'ghosts';
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 export { supabaseUrl, SUPABASE_BUCKET };
@@ -36,9 +38,17 @@ const EXTENSION_BY_MIME: Record<string, string> = {
   'image/gif': 'gif'
 };
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB raw cap (compressed to 0.5MB)
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB raw cap (compressed below)
+
+// Supabase enforces a per-file size limit on the bucket. Compressing to 0.5MB
+// (524,288 bytes) left a window where a file passed compression and was then
+// refused by the server, so the target below sits safely under the bucket limit.
+// Check the real value in Supabase under Storage, then the bucket's settings, and
+// set VITE_SUPABASE_MAX_FILE_BYTES if it differs.
+const BUCKET_FILE_SIZE_LIMIT_BYTES =
+  Number((import.meta as any).env?.VITE_SUPABASE_MAX_FILE_BYTES) || 512000;
 const COMPRESSION_OPTIONS = {
-  maxSizeMB: 0.5,
+  maxSizeMB: 0.45,
   maxWidthOrHeight: 1280,
   useWebWorker: true,
   initialQuality: 0.7
@@ -112,6 +122,16 @@ const uploadOneImage = async (image: string, retries = 2): Promise<UploadResult>
     compressed = await imageCompression(file, COMPRESSION_OPTIONS);
   } catch (err: any) {
     return { ok: false, error: `Compression failed: ${err?.message || 'unknown'}`, originalUrl: image };
+  }
+
+  // Compression targets a size but does not guarantee it (animated GIFs especially).
+  // Catch it here so the user sees a clear reason instead of a server rejection.
+  if (compressed.size > BUCKET_FILE_SIZE_LIMIT_BYTES) {
+    return {
+      ok: false,
+      error: `"${file.name}" could not be compressed below ${Math.round(BUCKET_FILE_SIZE_LIMIT_BYTES / 1024)}KB. Try a smaller or simpler image.`,
+      originalUrl: image
+    };
   }
 
   // Decide extension + content type AFTER compression based on the resulting blob
