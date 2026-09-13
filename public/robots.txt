@@ -4,6 +4,8 @@ Allow: /
 # Auth and account pages hold nothing useful for search results
 Disallow: /oauth-callback
 Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /reset-password
 Disallow: /admin/
 Disallow: /AdminDashboard
 Disallow: /setup/

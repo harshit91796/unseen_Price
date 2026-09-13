@@ -899,6 +899,26 @@ export const resendVerificationEmail = async (email: string) => {
   }
 };
 
+/** Ask for a password reset email. The reply is the same whether or not the email exists. */
+export const forgotPassword = async (email: string) => {
+  try {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data as { success: boolean; message: string };
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+/** Set a new password using the token from the reset email link. */
+export const resetPassword = async (token: string, password: string) => {
+  try {
+    const response = await api.put(`/auth/reset-password/${encodeURIComponent(token)}`, { password });
+    return response.data as { success: boolean; message: string };
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
 // ============================
 // Payments (Razorpay)
 // ============================

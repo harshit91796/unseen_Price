@@ -160,6 +160,10 @@ const Login: React.FC = () => {
             />
             <button type="submit" className="primary-button">Sign in</button>
           </form>
+
+          <div className="auth-footer">
+            <p><Link to="/forgot-password">Forgot your password?</Link></p>
+          </div>
           
           <div className="divider">OR</div>
           

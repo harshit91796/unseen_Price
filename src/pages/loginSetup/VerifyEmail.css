@@ -8,6 +8,8 @@
 }
 
 .verify-email-card {
+  /* Without this, width:100% plus the side padding overflowed phone screens. */
+  box-sizing: border-box;
   width: 100%;
   max-width: 480px;
   background: white;

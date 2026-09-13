@@ -30,6 +30,8 @@ import DirectMessagePage from "./pages/conversationSetep/DirectMessagePage";
 // import ChatPage from "./pages/conversationSetep/dummy page/Chat";
 import Register from "./pages/loginSetup/Register";
 import VerifyEmail from "./pages/loginSetup/VerifyEmail";
+import ForgotPassword from "./pages/loginSetup/ForgotPassword";
+import ResetPassword from "./pages/loginSetup/ResetPassword";
 import SearchPage from './pages/searchPage/SearchPage';
 import Profile from './pages/profilePage/Profile';
 import AddNewProduct from './pages/addProduct/AddNewProduct';
@@ -85,6 +87,15 @@ export const router = createBrowserRouter([
   {
     path: '/verify-email',
     element: <VerifyEmail />,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />,
+  },
+  {
+    // Opened from the reset email: /reset-password?token=...
+    path: '/reset-password',
+    element: <ResetPassword />,
   },
   {
     path: '/AdminDashboard',
