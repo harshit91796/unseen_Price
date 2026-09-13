@@ -6,6 +6,7 @@ import { setUser } from '../../redux/user/userSlice';
 import './Auth.css';
 import logo from '../../assets/images/l2.png';
 import { FaGoogle, FaFacebook, FaApple, FaTwitter } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import usePageMeta from '../../hooks/usePageMeta';
 
 const Register: React.FC = () => {
@@ -62,6 +63,15 @@ const Register: React.FC = () => {
     try {
       const userData = await register(formData);
       dispatch(setUser(userData.data));
+      // They can use the site now, but login is blocked until the email is
+      // verified. Say so up front instead of surprising them at next login.
+      if (userData.needsEmailVerification) {
+        toast.info(
+          `Account created. We sent a verification link to ${formData.email}. ` +
+          'Verify it before you log in next time.',
+          { autoClose: 10000 }
+        );
+      }
       navigate('/setup/avatar');
     } catch (error: any) {
       setError(error.response?.data?.message || 'Registration failed. Please try again.');

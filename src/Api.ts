@@ -141,6 +141,15 @@ export const adminLogin = async (email: string, password: string) => {
 export const register = async (userData: any) => {
   try {
     const response = await api.post('/auth/register', userData);
+    // The new account's token MUST replace any session already in this browser.
+    // Previously it was dropped, so the next requests (profile picture upload,
+    // profile page) silently ran as whoever was logged in before, and wrote the
+    // new user's photo onto that other account.
+    if (response.data?.token) {
+      localStorage.setItem('authToken', response.data.token);
+    } else {
+      localStorage.removeItem('authToken');
+    }
     return response.data;
   } catch (error: unknown) {
     if (error instanceof Error) {
