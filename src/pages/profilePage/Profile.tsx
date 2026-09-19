@@ -18,7 +18,7 @@ import StarRating from '../../components/Reviews/StarRating';
 import ShareButton from '../../components/ShareButton/ShareButton';
 import PriceDisplay from '../../components/Price/PriceDisplay';
 import StockBadge from '../../components/Price/StockBadge';
-import usePageMeta from '../../hooks/usePageMeta';
+import usePageMeta, { SITE_URL } from '../../hooks/usePageMeta';
 
 interface PaginationInfo {
   page: number;
@@ -478,6 +478,7 @@ const Profile = () => {
                   <ShareButton
                     title={shopDetails.name}
                     subtitle={shopDetails.category?.name}
+                    url={`${SITE_URL}/share/shop/${shopId}`}
                   />
                   {currentUser?.user?._id !== shopDetails?.owner && (
                     <ReportButton targetType="shop" targetId={shopDetails._id} variant="text" />

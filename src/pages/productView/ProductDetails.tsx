@@ -30,7 +30,7 @@ import VariantPicker from '../../components/VariantPicker/VariantPicker';
 import { computePriceInfo, stockLabel, stockBand, totalStock } from '../../utils/pricing';
 import PriceDisplay from '../../components/Price/PriceDisplay';
 import StockBadge from '../../components/Price/StockBadge';
-import usePageMeta from '../../hooks/usePageMeta';
+import usePageMeta, { SITE_URL } from '../../hooks/usePageMeta';
 
 interface Advertisement {
   _id: string;
@@ -304,6 +304,9 @@ const ProductDetails: React.FC = () => {
                 <ShareButton
                   title={productDetails.name}
                   subtitle={`₹${productDetails.price}`}
+                  // Share the preview address, not this page: sharing apps do not run
+                  // JavaScript, so only that address can show this product's photo.
+                  url={`${SITE_URL}/share/product/${productId}`}
                 />
                 {!isOwner && productId && (
                   <ReportButton targetType="product" targetId={productId} variant="text" />

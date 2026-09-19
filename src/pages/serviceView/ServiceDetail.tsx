@@ -19,7 +19,7 @@ import ReviewSection from '../../components/Reviews/ReviewSection';
 import StarRating from '../../components/Reviews/StarRating';
 import ShareButton from '../../components/ShareButton/ShareButton';
 import PriceDisplay from '../../components/Price/PriceDisplay';
-import usePageMeta from '../../hooks/usePageMeta';
+import usePageMeta, { SITE_URL } from '../../hooks/usePageMeta';
 
 const PRICE_TYPE_LABELS: Record<string, string> = {
   fixed: '',
@@ -195,6 +195,7 @@ const ServiceDetail: React.FC = () => {
             <ShareButton
               title={service.name}
               subtitle={`${service.serviceType?.replace('-', ' ')} · ₹${service.price}`}
+              url={`${SITE_URL}/share/service/${serviceId}`}
             />
             <ReportButton targetType="service" targetId={service._id} variant="text" />
           </div>
