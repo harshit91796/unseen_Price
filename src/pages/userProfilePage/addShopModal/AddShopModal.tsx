@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Close, Store, LocationOn, Phone, Description, Email, AddAPhoto, Delete, RoomService } from '@mui/icons-material';
+import { Close, Store, Phone, Description, Email, AddAPhoto, Delete, RoomService } from '@mui/icons-material';
 import styles from './AddShopModal.module.css';
+import LocationPicker, { PickedLocation } from '../../../components/LocationPicker/LocationPicker';
 
 const MODAL_PORTAL_ID = 'add-shop-modal-portal';
 
@@ -21,7 +22,6 @@ import { FaCity } from 'react-icons/fa';
 import { uploadImagesToSupabase, safeRevokeBlobUrl } from '../../../services/service';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { fetchPlaceSuggestions } from '../../../utils/opencage';
 
 interface AddShopModalProps {
   isOpen: boolean;
@@ -35,26 +35,12 @@ interface Category {
   image: string;
 }
 
-interface LocationSuggestion {
-  formatted: {
-    street: string;
-    city: string;
-    state: string;
-    country: string;
-  };
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-}
 
 const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, categories = [] }) => {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     const htmlEl = document.documentElement;
@@ -169,79 +155,44 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      let shopDataToSubmit = { ...formData };
-        console.log( 'shopDataToSubmit', shopDataToSubmit);
-      if (uploadedImages.length > 0) {
-        shopDataToSubmit.images = uploadedImages;
-        const uploadedImageUrls = await uploadImagesToSupabase(uploadedImages);
-        shopDataToSubmit.images = uploadedImageUrls;
-      }else{
-        toast.error('Please upload at least one image');
-        return;
-      }
+    setFormError('');
 
-      await onSubmit(shopDataToSubmit);
-      onClose();
-    } catch (error) {
-      console.error('Error submitting shop data:', error);
-    }
-  };
+    // Checked here so the owner sees the reason. The server enforces the same
+    // rules, but its message used to be swallowed by a generic toast.
+    const coords = formData.targeting.coordinates;
+    const hasPin = Array.isArray(coords) && coords.length === 2 && !(coords[0] === 0 && coords[1] === 0);
+    const phoneDigits = String(formData.phone || '').replace(/\D/g, '');
 
-  const handleLocationSearch = async (query: string) => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
+    const problem =
+      !formData.name.trim() ? 'Enter your business name.' :
+      !formData.category.name ? 'Choose a category.' :
+      phoneDigits.length < 7 ? 'Enter a phone number customers can call.' :
+      !hasPin ? 'Set your location: search for your address and confirm the pin on the map.' :
+      uploadedImages.length === 0 ? 'Upload at least one photo.' :
+      '';
 
-    // Don't query at all if too short — Nominatim rate-limits aggressively (1 req/sec)
-    if (!query.trim() || query.trim().length < 3) {
-      setLocationSuggestions([]);
-      setShowSuggestions(false);
+    if (problem) {
+      setFormError(problem);
+      toast.error(problem);
       return;
     }
 
-    const timeout = setTimeout(async () => {
-      try {
-        const suggestions = await fetchPlaceSuggestions(query);
-        setLocationSuggestions(suggestions);
-        setShowSuggestions(true);
-      } catch (error) {
-        console.error('Error fetching location suggestions:', error);
-      }
-    }, 800); // 800ms debounce — stays under Nominatim's 1 req/sec limit
+    try {
+      let shopDataToSubmit = { ...formData };
+      shopDataToSubmit.images = await uploadImagesToSupabase(uploadedImages);
 
-    setSearchTimeout(timeout);
+      await onSubmit(shopDataToSubmit);
+      onClose();
+    } catch (error: any) {
+      // Keep the modal open so nothing the owner typed is lost.
+      const message = error?.response?.data?.message || error?.response?.data?.error || 'Could not save your business. Please try again.';
+      setFormError(message);
+      toast.error(message);
+    }
   };
 
-  const handleLocationSelect = (suggestion: LocationSuggestion) => {
-    const { street, city, state, country } = suggestion.formatted;
-    console.log( 'suggestion', suggestion.formatted , 'street', street , 'city', city , 'state', state , 'country', country);
-    setFormData(prev => ({
-      ...prev,
-      address: {
-        ...prev.address,
-        street: street || '',
-        city: city || '',
-        state: state || '',
-        country: country || ''
-      },
-      targeting: {
-        ...prev.targeting,
-        coordinates: [suggestion.coordinates.lng, suggestion.coordinates.lat],
-        city: city || '',
-        state: state || '',
-        country: country || ''
-      }
-    }));
-    
-    setShowSuggestions(false);
-  };
 
-  const formatAddress = (suggestion: LocationSuggestion) => {
-    const { street, city, state, country } = suggestion.formatted;
-    const parts = [street, city, state, country].filter(Boolean);
-    return parts.join(', ');
-  };
+
 
   if (!isOpen) return null;
 
@@ -382,28 +333,26 @@ const AddShopModal: React.FC<AddShopModalProps> = ({ isOpen, onClose, onSubmit, 
               />
             </div>
 
-            <div className={styles.inputGroup}>
-              <LocationOn className={styles.inputIcon} />
-              <input
-                type="text"
-                placeholder="Search for location..."
-                onChange={(e) => handleLocationSearch(e.target.value)}
-                required
-              />
-              {showSuggestions && locationSuggestions.length > 0 && (
-                <div className={styles.locationSuggestions}>
-                  {locationSuggestions.map((suggestion, index) => (
-                    <div
-                      key={index}
-                      className={styles.suggestionItem}
-                      onClick={() => handleLocationSelect(suggestion)}
-                    >
-                      {formatAddress(suggestion)}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            {/* Search, then confirm the pin. Without a pin the shop cannot be
+                found in any nearby search, which is how 18 shops ended up invisible. */}
+            <LocationPicker
+              value={{
+                coordinates: (formData.targeting.coordinates as [number, number]) || null,
+                address: formData.address
+              }}
+              onChange={(next: PickedLocation) => setFormData(prev => ({
+                ...prev,
+                address: next.address,
+                targeting: {
+                  ...prev.targeting,
+                  coordinates: next.coordinates || [0, 0],
+                  city: next.address.city,
+                  state: next.address.state,
+                  country: next.address.country
+                }
+              }))}
+              error={formError}
+            />
 
             <div className={styles.inputGroup}>
               <input

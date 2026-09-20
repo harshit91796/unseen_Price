@@ -1,0 +1,107 @@
+.location-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.location-picker-search {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.location-picker-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 0.7rem 0.9rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.location-picker-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
+}
+
+.location-picker-gps {
+  flex: 0 0 auto;
+  padding: 0.7rem 0.9rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.location-picker-gps:hover:not(:disabled) {
+  border-color: #667eea;
+  color: #4338ca;
+}
+
+.location-picker-gps:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.location-picker-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1200;          /* above the Leaflet map, which sits at 400 */
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.location-picker-suggestions li {
+  padding: 0.6rem 0.8rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.location-picker-suggestions li:last-child { border-bottom: none; }
+.location-picker-suggestions li:hover { background: #f5f3ff; }
+
+.location-picker-map {
+  height: 260px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  z-index: 0;             /* keeps Leaflet panes below modal chrome */
+}
+
+.location-picker-hint,
+.location-picker-status,
+.location-picker-error {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.location-picker-status.ok { color: #047857; }
+.location-picker-status.warn { color: #b45309; }
+
+.location-picker-error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .location-picker-map { height: 210px; }
+}

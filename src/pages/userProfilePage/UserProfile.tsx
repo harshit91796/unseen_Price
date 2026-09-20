@@ -140,9 +140,12 @@ const UserProfile = () => {
       if (isService && newId) {
         setTimeout(() => navigate(`/add-service/${newId}`), 600);
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Show the server's reason (bad location, missing phone) and rethrow so the
+      // modal stays open with everything the owner typed.
       console.error('Failed to create business', error);
-      toast.error('Failed to create business');
+      toast.error(error?.response?.data?.message || error?.response?.data?.error || 'Failed to create business');
+      throw error;
     }
   };
 
