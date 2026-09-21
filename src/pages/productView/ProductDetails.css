@@ -833,3 +833,56 @@
     margin-top: 10px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Phone layout fix.
+
+   Grid and flex children default to min-width:auto, which means "never shrink
+   below your own content". For the product photo that content is the image's
+   natural width, roughly 1280px, so the whole card was forced wider than the
+   screen and everything past the right edge was clipped away by the page's
+   overflow-x:hidden. Letting these children shrink is the actual fix.
+   --------------------------------------------------------------------------- */
+.product-main-section > *,
+.image-grid > *,
+.product-info > *,
+.product-header > *,
+.product-meta > * {
+  min-width: 0;
+}
+
+.product-image,
+.product-images img {
+  max-width: 100%;
+}
+
+@media (max-width: 576px) {
+  .product-details-container {
+    padding: 16px 12px;
+  }
+
+  .product-main-section {
+    padding: 16px;
+    gap: 20px;
+    border-radius: 14px;
+  }
+
+  /* The title shared a row with Share and Report, leaving it too little space:
+     "Hoodie" was breaking into three lines. Give it the full width instead. */
+  .product-header-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .product-header h1 {
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+  }
+
+  /* break-word, not anywhere: only split a word that genuinely cannot fit. */
+  .product-header h1,
+  .product-description p {
+    overflow-wrap: break-word;
+  }
+}

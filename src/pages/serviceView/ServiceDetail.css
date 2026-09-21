@@ -260,3 +260,60 @@
   border-color: #667eea;
   background: #f8fafc;
 }
+
+/* ---------------------------------------------------------------------------
+   Phone layout fix, same cause as the product page.
+
+   Grid children default to min-width:auto, meaning they never shrink below
+   their own content. For a service photo that is the image's natural width, so
+   the page demanded 426px on a 360px screen and the right side was clipped.
+   --------------------------------------------------------------------------- */
+.service-detail-grid > *,
+.service-images-section > *,
+.service-info-section > *,
+.service-thumbnails > * {
+  min-width: 0;
+}
+
+.service-main-image,
+.service-thumb,
+.service-images-section img {
+  max-width: 100%;
+}
+
+/* The address and phone sit in a flex row with an icon. Without wrapping, a
+   long address is held on one line and pushes the page wider than the screen. */
+.service-shop-address,
+.service-shop-contact {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  /* "anywhere", not "break-word": only anywhere also shrinks the element's
+     minimum width. One shop pasted a full Google Maps link into its street
+     field, and break-word still reserved the whole link's width. */
+  overflow-wrap: anywhere;
+}
+
+.service-shop-address > *,
+.service-shop-contact > *,
+.service-shop-info > * {
+  min-width: 0;
+}
+
+@media (max-width: 576px) {
+  .service-detail-container {
+    padding: 16px 12px;
+  }
+
+  .service-detail-grid {
+    gap: 20px;
+  }
+
+  .service-name {
+    font-size: 1.6rem;
+    overflow-wrap: break-word;
+  }
+
+  .service-description p {
+    overflow-wrap: break-word;
+  }
+}
