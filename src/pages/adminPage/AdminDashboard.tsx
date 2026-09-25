@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '../../hooks/useDebounce';
 import {
   Dashboard, People, ShoppingBag, Store,
-  Campaign, ShowChart, Settings, ExitToApp,
+  Campaign, ShowChart, Settings, ExitToApp, RoomService,
   Add, Delete, Edit, Search,
   Visibility,
   VisibilityOff,
@@ -19,6 +19,7 @@ import UsersManagement from './UsersManagement';
 import ShopsManagement from './ShopsManagement';
 import ProductsManagement from './ProductsManagement';
 import AdminInbox from './AdminInbox';
+import ServiceTypesManagement from './ServiceTypesManagement';
 
 
 interface MenuItem {
@@ -56,6 +57,7 @@ const menuItems: MenuItem[] = [
   { icon: <People />, label: 'Users', value: 'users' },
   { icon: <Store />, label: 'Shops', value: 'shops' },
   { icon: <ShoppingBag />, label: 'Products', value: 'products' },
+  { icon: <RoomService />, label: 'Service Types', value: 'serviceTypes' },
   { icon: <Campaign />, label: 'Advertisements', value: 'ads' },
   { icon: <ShowChart />, label: 'Sales Analytics', value: 'analytics' },
   { icon: <Settings />, label: 'Settings', value: 'settings' },
@@ -257,6 +259,9 @@ const AdminDashboard = () => {
 
       case 'products':
         return <ProductsManagement />;
+
+      case 'serviceTypes':
+        return <ServiceTypesManagement />;
 
       case 'ads':
         return (

@@ -473,6 +473,23 @@ export const getCategories = async () => {
   }
 };
 
+/**
+ * The approved service types, as an array of { name, label }.
+ *
+ * Read by the Add Service form, the Edit Service modal and the customer search
+ * filter. Those three used to keep their own copies and two of them had already
+ * drifted: the forms offered 28 types while the filter offered 17, so a listed
+ * mechanic could never be filtered for.
+ */
+export const getServiceTypes = async () => {
+  try {
+    const response = await api.get('/service/types');
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
 
 export const getProductDetails = async (productId: string) => {
   try {
@@ -871,6 +888,55 @@ export const updateCategory = async (categoryId: string, categoryData: { name?: 
 export const deleteCategory = async (categoryId: string) => {
   try {
     const response = await api.delete(`/admin/category/${categoryId}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+// Admin: Service type APIs
+// The list every service dropdown reads, plus the "Other" suggestions owners send
+// when their trade is missing from it.
+export const getAdminServiceTypes = async () => {
+  try {
+    const response = await api.get('/admin/service-types');
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const createServiceType = async (label: string) => {
+  try {
+    const response = await api.post('/admin/service-types', { label });
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const setServiceTypeStatus = async (typeId: string, status: 'approved' | 'pending' | 'rejected') => {
+  try {
+    const response = await api.put(`/admin/service-types/${typeId}/status`, { status });
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+/** Fold a near-duplicate into a real type, moving its listings across. */
+export const mergeServiceType = async (typeId: string, into: string) => {
+  try {
+    const response = await api.put(`/admin/service-types/${typeId}/merge`, { into });
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+export const deleteServiceType = async (typeId: string) => {
+  try {
+    const response = await api.delete(`/admin/service-types/${typeId}`);
     return response.data;
   } catch (error: unknown) {
     throw error;

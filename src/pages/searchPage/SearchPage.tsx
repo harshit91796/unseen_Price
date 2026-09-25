@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { Slider } from '@mui/material';
 import { calculateDistance, formatDistance } from '../../utils/distance';
 import usePageMeta from '../../hooks/usePageMeta';
+import useServiceTypes from '../../hooks/useServiceTypes';
 import { filterByFrequencyCap, recordImpressions, dismissAd } from '../../utils/adFrequency';
 import SponsoredTag from '../../components/AdTags/SponsoredTag';
 import InlineAdCard from '../../components/InlineAdCard/InlineAdCard';
@@ -161,6 +162,9 @@ const SearchPage = () => {
     serviceType: '',
     bookingRequired: ''
   });
+  // The same list the owner Add/Edit forms use, so every type an owner can pick
+  // is a type a customer can filter by.
+  const { types: serviceTypes } = useServiceTypes();
   const [leftAds, setLeftAds] = useState<Advertisement[]>([]);
   const [rightAds, setRightAds] = useState<Advertisement[]>([]);
   const [visibleLeftAds, setVisibleLeftAds] = useState<Advertisement[]>([]);
@@ -906,6 +910,10 @@ const SearchPage = () => {
                 <>
                   <div className="filter-group">
                     <h3>Service Type</h3>
+                    {/* Read from the database, the same list the owner forms use.
+                        This dropdown used to hold its own copy of 17 types while
+                        the Add Service form offered 28, so a listed mechanic,
+                        carpenter or pharmacy could never be filtered for. */}
                     <select
                       name="serviceType"
                       className="filter-select"
@@ -913,23 +921,9 @@ const SearchPage = () => {
                       onChange={handleFilterChange}
                     >
                       <option value="">All Types</option>
-                      <option value="restaurant">Restaurant</option>
-                      <option value="cafe">Cafe</option>
-                      <option value="catering">Catering</option>
-                      <option value="salon">Salon</option>
-                      <option value="spa">Spa</option>
-                      <option value="parlour">Parlour</option>
-                      <option value="clinic">Clinic</option>
-                      <option value="dental">Dental</option>
-                      <option value="hotel">Hotel</option>
-                      <option value="guest-house">Guest House</option>
-                      <option value="gym">Gym</option>
-                      <option value="yoga">Yoga</option>
-                      <option value="tutoring">Tutoring</option>
-                      <option value="photography">Photography</option>
-                      <option value="plumber">Plumber</option>
-                      <option value="electrician">Electrician</option>
-                      <option value="laundry">Laundry</option>
+                      {serviceTypes.map((t) => (
+                        <option key={t.name} value={t.name}>{t.label}</option>
+                      ))}
                     </select>
                   </div>
 

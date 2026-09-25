@@ -310,3 +310,49 @@
     flex: 1;
   }
 } 
+
+/* ---------------------------------------------------------------------------
+   Phone layout for the Add Product and Add Service forms (both use this file).
+
+   The footer kept Cancel and the submit button side by side. On a 360px screen
+   each got about 150px, so "Add Service" wrapped onto two lines inside its own
+   button. Stacking them full width is clearer and gives a bigger tap target.
+   --------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .add-product-footer {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+  }
+
+  .add-product-footer .btn,
+  .add-product-header .btn,
+  .header-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Never break a button's label across lines. */
+  .btn {
+    white-space: nowrap;
+  }
+
+  .add-product-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+
+  .add-product-header h1 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  /* Form fields and their labels should never be squeezed side by side. */
+  .form-row,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

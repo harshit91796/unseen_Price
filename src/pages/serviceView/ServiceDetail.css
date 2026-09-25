@@ -317,3 +317,24 @@
     overflow-wrap: break-word;
   }
 }
+
+/* Owner-only Edit button, matching the product page's control. */
+.service-edit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  color: #4338ca;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.service-edit-button:hover {
+  border-color: #667eea;
+  background: #f5f3ff;
+}

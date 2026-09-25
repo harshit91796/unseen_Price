@@ -15,28 +15,11 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { uploadImagesToSupabase, safeRevokeBlobUrl } from '../../services/service';
+import { PRICE_TYPES, OTHER_SERVICE_TYPE } from '../../constants/serviceOptions';
+// The list comes from the database, so every dropdown in the app agrees and an
+// admin can add a type without a deploy.
+import useServiceTypes from '../../hooks/useServiceTypes';
 import usePageMeta from '../../hooks/usePageMeta';
-
-const SERVICE_TYPES = [
-  'restaurant', 'cafe', 'catering', 'food-delivery',
-  'salon', 'spa', 'parlour', 'massage',
-  'clinic', 'dental', 'physiotherapy', 'pharmacy',
-  'hotel', 'guest-house', 'resort',
-  'gym', 'yoga', 'fitness',
-  'tutoring', 'coaching',
-  'photography', 'event-planning',
-  'plumber', 'electrician', 'carpenter', 'mechanic',
-  'laundry', 'cleaning'
-];
-
-const PRICE_TYPES = [
-  { value: 'fixed', label: 'Fixed Price' },
-  { value: 'starting_from', label: 'Starting From' },
-  { value: 'per_hour', label: 'Per Hour' },
-  { value: 'per_night', label: 'Per Night' },
-  { value: 'per_session', label: 'Per Session' },
-  { value: 'per_person', label: 'Per Person' }
-];
 
 const AddService: React.FC = () => {
   usePageMeta({ title: 'Add Service', noindex: true });
@@ -53,9 +36,14 @@ const AddService: React.FC = () => {
   const [priceType, setPriceType] = useState<string>('fixed');
   const [duration, setDuration] = useState<string>('');
   const [serviceType, setServiceType] = useState<string>('');
+  // What the owner types when their trade is not on the list yet.
+  const [customType, setCustomType] = useState<string>('');
   const [bookingRequired, setBookingRequired] = useState<boolean>(false);
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const { types: serviceTypes, loading: typesLoading } = useServiceTypes();
+  const isOtherType = serviceType === OTHER_SERVICE_TYPE;
 
   const navigate = useNavigate();
 
@@ -101,6 +89,10 @@ const AddService: React.FC = () => {
       toast.error('Please fill in all required fields and upload at least one image');
       return;
     }
+    if (isOtherType && customType.trim().length < 2) {
+      toast.error('Tell us what kind of service this is, e.g. Tailor or Car Wash');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -119,7 +111,12 @@ const AddService: React.FC = () => {
         mrp: mrp > 0 ? mrp : null,
         priceType,
         duration,
-        serviceType: serviceType.toLowerCase(),
+        // With "Other", the word the owner typed becomes the service type itself,
+        // so their listing is text-searchable straight away. isCustomType tells the
+        // backend this is a new type being proposed, for an admin to approve; without
+        // that flag an unknown type is rejected.
+        serviceType: (isOtherType ? customType : serviceType).trim().toLowerCase(),
+        isCustomType: isOtherType,
         category: shopDetails?.category?.name || '',
         images: uploadedImageUrls,
         isAvailable,
@@ -130,10 +127,16 @@ const AddService: React.FC = () => {
       };
 
       await createService(serviceData);
-      toast.success('Service added successfully');
+      toast.success(
+        isOtherType
+          ? 'Service added. Your service type is live and searchable, and our team will add it to the filters.'
+          : 'Service added successfully'
+      );
       navigate(`/shop/${shopId}`);
-    } catch (error) {
-      toast.error('Failed to create service');
+    } catch (error: any) {
+      // The backend rejects an unrecognised service type with a message worth
+      // reading, so show it instead of a generic failure.
+      toast.error(error?.response?.data?.message || 'Failed to create service');
     } finally {
       setIsSubmitting(false);
     }
@@ -173,19 +176,19 @@ const AddService: React.FC = () => {
             <h2><Category /> Service Type</h2>
             <div className="form-grid">
               <div className="form-field">
-                <label>Type</label>
+                <label>Type <span style={{color:'#ef4444'}}>*</span></label>
                 <select
                   value={serviceType}
                   onChange={(e) => setServiceType(e.target.value)}
                   className="form-select"
+                  disabled={typesLoading}
                   required
                 >
-                  <option value="">Select service type</option>
-                  {SERVICE_TYPES.map(t => (
-                    <option key={t} value={t}>
-                      {t.charAt(0).toUpperCase() + t.slice(1).replace('-', ' ')}
-                    </option>
+                  <option value="">{typesLoading ? 'Loading types...' : 'Select service type'}</option>
+                  {serviceTypes.map(t => (
+                    <option key={t.name} value={t.name}>{t.label}</option>
                   ))}
+                  <option value={OTHER_SERVICE_TYPE}>Other — my service is not listed</option>
                 </select>
               </div>
               <div className="form-field">
@@ -200,6 +203,28 @@ const AddService: React.FC = () => {
                 </select>
               </div>
             </div>
+
+            {/* An owner whose trade is missing used to have to pick something
+                wrong or give up. Now they name it, list today, and our team adds
+                it to the customer filters. */}
+            {isOtherType && (
+              <div className="form-field" style={{ marginTop: '0.75rem' }}>
+                <label>What kind of service is it? <span style={{color:'#ef4444'}}>*</span></label>
+                <input
+                  type="text"
+                  value={customType}
+                  onChange={(e) => setCustomType(e.target.value)}
+                  placeholder="e.g. Tailor, Car Wash, Pet Grooming"
+                  className="form-input"
+                  maxLength={40}
+                  required
+                />
+                <small style={{ color: '#6b7280', fontSize: '0.8rem' }}>
+                  Your listing goes live straight away and customers can find it by
+                  searching this word. We will add it to the filter list shortly.
+                </small>
+              </div>
+            )}
           </div>
 
           <div className="form-group">

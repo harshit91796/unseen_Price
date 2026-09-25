@@ -10,7 +10,7 @@ import {
   Phone,
   Email
 } from '@mui/icons-material';
-import { getServiceDetails } from '../../Api';
+import { getServiceDetails, updateService } from '../../Api';
 import { toast } from 'react-toastify';
 import ImageModal from '../../components/imageModal/ImageModal';
 import ReportButton from '../../components/ReportButton/ReportButton';
@@ -20,6 +20,9 @@ import StarRating from '../../components/Reviews/StarRating';
 import ShareButton from '../../components/ShareButton/ShareButton';
 import PriceDisplay from '../../components/Price/PriceDisplay';
 import usePageMeta, { SITE_URL } from '../../hooks/usePageMeta';
+import { useSelector } from 'react-redux';
+import { Edit } from '@mui/icons-material';
+import ServiceEditModal from './edit modal/ServiceEditModal';
 
 const PRICE_TYPE_LABELS: Record<string, string> = {
   fixed: '',
@@ -35,6 +38,8 @@ const ServiceDetail: React.FC = () => {
   const [service, setService] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const currentUser = useSelector((state: any) => state.user);
 
   // Must stay above the early "Loading..." returns below (hooks cannot be conditional).
   const metaShopName = service?.shopId && typeof service.shopId === 'object' ? service.shopId.name : undefined;
@@ -65,6 +70,20 @@ const ServiceDetail: React.FC = () => {
 
   if (loading) return <div className="service-detail-loading">Loading...</div>;
   if (!service) return <div className="service-detail-loading">Service not found</div>;
+
+  // The shop's owner id now comes back with the service, so the page can show
+  // Edit to the person who owns it. Previously services could only be created
+  // and deleted, never changed.
+  const shopOwnerId = typeof service.shopId === 'object' ? service.shopId?.owner : undefined;
+  const isOwner = Boolean(currentUser?.user?._id) && Boolean(shopOwnerId) &&
+    String(currentUser.user._id) === String(shopOwnerId);
+
+  const handleServiceUpdate = async (updatedData: any) => {
+    await updateService(service._id, updatedData);
+    const fresh = await getServiceDetails(serviceId as string);
+    setService(fresh);
+    toast.success('Service updated');
+  };
 
   const priceLabel = PRICE_TYPE_LABELS[service.priceType] || '';
   const priceDisplay = service.priceType === 'starting_from'
@@ -192,15 +211,33 @@ const ServiceDetail: React.FC = () => {
           </div>
 
           <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            {isOwner && (
+              <button
+                className="service-edit-button"
+                onClick={() => setIsEditModalOpen(true)}
+                aria-label="Edit service"
+              >
+                <Edit fontSize="small" /> Edit
+              </button>
+            )}
             <ShareButton
               title={service.name}
               subtitle={`${service.serviceType?.replace('-', ' ')} · ₹${service.price}`}
               url={`${SITE_URL}/share/service/${serviceId}`}
             />
-            <ReportButton targetType="service" targetId={service._id} variant="text" />
+            {!isOwner && <ReportButton targetType="service" targetId={service._id} variant="text" />}
           </div>
         </div>
       </div>
+
+      {isOwner && (
+        <ServiceEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          service={service}
+          onUpdate={handleServiceUpdate}
+        />
+      )}
 
       <ReviewSection
         targetType="service"
