@@ -130,6 +130,11 @@
   .category-name {
     font-weight: 500;
     color: var(--text-dark);
+    /* Category names come from the database and were typed as "clothes",
+       "footwears", "students". Capitalising here keeps the tiles tidy without
+       rewriting the stored data; an admin can rename them properly on the
+       Shop Categories screen. */
+    text-transform: capitalize;
   }
   
   /* Trending Shops Section */

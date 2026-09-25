@@ -2,7 +2,8 @@ import './feed.css';
 import { Link } from 'react-router-dom';
 import { shopeImages } from '../../Pictures';
 import { useEffect, useState, useCallback } from 'react';
-import { getAdvertisementNearby } from '../../Api';
+import { getAdvertisementNearby, getCategories } from '../../Api';
+import { categoryIcon } from '../../constants/categoryIcons';
 import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency';
 import { LocationOn, ArrowBack, ArrowForward } from '@mui/icons-material';
 import SafeImage from '../../components/SafeImage/SafeImage';
@@ -52,6 +53,21 @@ const Feed = () => {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
+  const [dbCategories, setDbCategories] = useState<any[]>([]);
+
+  // One request, and the tiles match the shop dropdown. A failure leaves the
+  // section empty rather than showing categories nothing can be listed under.
+  useEffect(() => {
+    let active = true;
+    getCategories()
+      .then((rows) => {
+        if (!active) return;
+        const list = Array.isArray(rows) ? rows : (rows?.data || []);
+        setDbCategories(list.filter((c: any) => c && c.name));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     getUserLocation();
@@ -218,22 +234,13 @@ const Feed = () => {
     { name: 'HD Boys', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop12 }
   ];
 
-  const categories = [
-    { name: 'Clothes', icon: '👕' },
-    { name: 'Footwear', icon: '👟' },
-    { name: 'Student', icon: '🎓' },
-    { name: 'Bicycles', icon: '🚲' },
-    { name: 'Beauty', icon: '💄' },
-    { name: 'Vehicles', icon: '🚗' },
-    { name: 'Electronics', icon: '📱' },
-    { name: 'Foods', icon: '🍔' },
-    { name: 'Medical & clinic', icon: '🏥' },
-    { name: 'Sports', icon: '🏆' },
-    { name: 'Education', icon: '📚' },
-    { name: 'Toys & Games', icon: '🎮' },
-    { name: 'Jewelry', icon: '💎' },
-    { name: 'Other Services', icon: '💡' },
-  ];
+  // Categories come from the database, the same list owners pick from when they
+  // create a shop. They used to be hardcoded here, and the two lists had drifted:
+  // Foods and Education were tiles on this page but not real categories, so no
+  // shop could be in them and tapping either led to a permanently empty search.
+  const categories = dbCategories.length > 0
+    ? dbCategories.map((c: any) => ({ name: c.name, icon: categoryIcon(c.name, c.icon) }))
+    : [];
 
   return (
     <div className="feed-container container">
@@ -337,6 +344,7 @@ const Feed = () => {
       </section>
 
       {/* Categories Section */}
+      {categories.length > 0 && (
       <section className="categories-section">
         <h2>Explore <span className="accent-text">Categories</span></h2>
         <div className="categories">
@@ -350,6 +358,7 @@ const Feed = () => {
           ))}
         </div>
       </section>
+      )}
 
       {/* Advertisements Section */}
       {advertisements.length > 0 ? (

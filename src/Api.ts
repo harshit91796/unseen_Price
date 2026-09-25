@@ -867,7 +867,7 @@ export const getAdminCategories = async () => {
   }
 };
 
-export const createCategory = async (categoryData: { name: string; image?: string }) => {
+export const createCategory = async (categoryData: { name: string; icon?: string; image?: string }) => {
   try {
     const response = await api.post('/admin/category', categoryData);
     return response.data;
@@ -876,7 +876,7 @@ export const createCategory = async (categoryData: { name: string; image?: strin
   }
 };
 
-export const updateCategory = async (categoryId: string, categoryData: { name?: string; image?: string }) => {
+export const updateCategory = async (categoryId: string, categoryData: { name?: string; icon?: string; image?: string }) => {
   try {
     const response = await api.put(`/admin/category/${categoryId}`, categoryData);
     return response.data;
@@ -888,6 +888,30 @@ export const updateCategory = async (categoryId: string, categoryData: { name?: 
 export const deleteCategory = async (categoryId: string) => {
   try {
     const response = await api.delete(`/admin/category/${categoryId}`);
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+/**
+ * Categories for the admin screen: each with how many shops, products and
+ * services carry its name, plus `orphans` — names listings carry that have no
+ * category row, which is where typos like "baeuty" show up.
+ */
+export const getCategoriesWithUsage = async () => {
+  try {
+    const response = await api.get('/admin/categories/with-usage');
+    return response.data;
+  } catch (error: unknown) {
+    throw error;
+  }
+};
+
+/** Move every listing carrying `from` into an existing category. */
+export const reassignCategory = async (from: string, categoryId: string) => {
+  try {
+    const response = await api.post('/admin/categories/reassign', { from, categoryId });
     return response.data;
   } catch (error: unknown) {
     throw error;
