@@ -20,6 +20,7 @@ import { PRICE_TYPES, OTHER_SERVICE_TYPE } from '../../constants/serviceOptions'
 // admin can add a type without a deploy.
 import useServiceTypes from '../../hooks/useServiceTypes';
 import usePageMeta from '../../hooks/usePageMeta';
+import { NumberField, readNumberField, toNumber } from '../../utils/numberField';
 
 const AddService: React.FC = () => {
   usePageMeta({ title: 'Add Service', noindex: true });
@@ -31,8 +32,9 @@ const AddService: React.FC = () => {
 
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const [price, setPrice] = useState<number>(0);
-  const [mrp, setMrp] = useState<number>(0);
+  // Empty, not 0: a box showing 0 meant every typed price came out as "0550".
+  const [price, setPrice] = useState<NumberField>('');
+  const [mrp, setMrp] = useState<NumberField>('');
   const [priceType, setPriceType] = useState<string>('fixed');
   const [duration, setDuration] = useState<string>('');
   const [serviceType, setServiceType] = useState<string>('');
@@ -43,6 +45,8 @@ const AddService: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { types: serviceTypes, loading: typesLoading } = useServiceTypes();
+  const priceValue = toNumber(price);
+  const mrpValue = toNumber(mrp);
   const isOtherType = serviceType === OTHER_SERVICE_TYPE;
 
   const navigate = useNavigate();
@@ -98,7 +102,7 @@ const AddService: React.FC = () => {
     try {
       const uploadedImageUrls = await uploadImagesToSupabase(uploadedImages);
 
-      if (mrp > 0 && mrp <= price) {
+      if (mrpValue > 0 && mrpValue <= priceValue) {
         toast.warning("MRP should be higher than the selling price (otherwise leave it empty)");
         setIsSubmitting(false);
         return;
@@ -107,8 +111,8 @@ const AddService: React.FC = () => {
       const serviceData: any = {
         name,
         description,
-        price,
-        mrp: mrp > 0 ? mrp : null,
+        price: priceValue,
+        mrp: mrpValue > 0 ? mrpValue : null,
         priceType,
         duration,
         // With "Other", the word the owner typed becomes the service type itself,
@@ -235,7 +239,7 @@ const AddService: React.FC = () => {
                 <input
                   type="number"
                   value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
+                  onChange={(e) => setPrice(readNumberField(e.target.value))}
                   placeholder="₹ 500"
                   className="form-input"
                   min="0"
@@ -246,8 +250,8 @@ const AddService: React.FC = () => {
                 <label>Original Price <span style={{color:'#9ca3af', fontWeight:400, fontSize:'0.8rem'}}>(optional — shows discount)</span></label>
                 <input
                   type="number"
-                  value={mrp || ''}
-                  onChange={(e) => setMrp(Number(e.target.value))}
+                  value={mrp}
+                  onChange={(e) => setMrp(readNumberField(e.target.value))}
                   placeholder="₹ 999"
                   className="form-input"
                   min="0"

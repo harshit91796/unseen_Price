@@ -18,6 +18,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { uploadImagesToSupabase, safeRevokeBlobUrl } from '../../services/service';
 import VariantEditor from '../../components/VariantEditor/VariantEditor';
 import usePageMeta from '../../hooks/usePageMeta';
+import { NumberField, readNumberField, toNumber } from '../../utils/numberField';
 
 const AddNewProduct: React.FC = () => {
   usePageMeta({ title: 'Add Product', noindex: true });
@@ -29,13 +30,20 @@ const AddNewProduct: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const [price, setPrice] = useState<number>(0);
-  const [mrp, setMrp] = useState<number>(0);
-  const [stock, setStock] = useState<number>(0);
+  // Empty, not 0: a box showing 0 meant every typed price came out as "0550",
+  // and the owner had to delete the leading zero on every listing.
+  const [price, setPrice] = useState<NumberField>('');
+  const [mrp, setMrp] = useState<NumberField>('');
+  const [stock, setStock] = useState<NumberField>('');
   const [isAvailable, setIsAvailable] = useState<boolean>(true);
   const [genderCategory, setGenderCategory] = useState<string>('mens');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState<boolean>(false);
+
+  // Read once here so the rest of the form works in plain numbers.
+  const priceValue = toNumber(price);
+  const mrpValue = toNumber(mrp);
+  const stockValue = toNumber(stock);
   const [newCategory, setNewCategory] = useState<string>('');
   const [hasVariants, setHasVariants] = useState<boolean>(false);
   const [variants, setVariants] = useState<any[]>([]);
@@ -87,7 +95,7 @@ const AddNewProduct: React.FC = () => {
       toast.error('Please fill in all required fields and upload at least one image');
       return;
     }
-    if (mrp > 0 && mrp <= price) {
+    if (mrpValue > 0 && mrpValue <= priceValue) {
       toast.warning("MRP should be higher than the selling price (otherwise leave it empty)");
       return;
     }
@@ -105,11 +113,13 @@ const AddNewProduct: React.FC = () => {
           toast.error('Each variant must have at least a Size OR a Color');
           return;
         }
-        if (!v.price || v.price <= 0) {
+        const vPrice = toNumber(v.price);
+        const vMrp = toNumber(v.mrp);
+        if (vPrice <= 0) {
           toast.error('Each variant needs a valid price');
           return;
         }
-        if (v.mrp && v.mrp <= v.price) {
+        if (vMrp > 0 && vMrp <= vPrice) {
           toast.warning(`Variant ${v.size || '-'} / ${v.color || '-'}: MRP must be higher than price (or leave empty)`);
           return;
         }
@@ -123,9 +133,9 @@ const AddNewProduct: React.FC = () => {
       cleanVariants = variants.map(v => ({
         size: v.size?.trim() || null,
         color: v.color?.trim() || null,
-        price: Number(v.price),
-        mrp: v.mrp > 0 ? Number(v.mrp) : null,
-        stock: Number(v.stock) || 0,
+        price: toNumber(v.price),
+        mrp: toNumber(v.mrp) > 0 ? toNumber(v.mrp) : null,
+        stock: toNumber(v.stock),
         sku: v.sku?.trim() || ''
       }));
     }
@@ -135,13 +145,13 @@ const AddNewProduct: React.FC = () => {
       const productData: any = {
         name,
         description,
-        price,
-        mrp: mrp > 0 ? mrp : null,
+        price: priceValue,
+        mrp: mrpValue > 0 ? mrpValue : null,
         variants: cleanVariants,
         productCategory: addedCategory || 'Extra',
         genderCategory: genderCategory || 'mens',
         images: [] as string[],
-        stock,
+        stock: stockValue,
         isAvailable,
         shopId: shopId as string,
         category: shopDetails?.category.name,
@@ -307,7 +317,7 @@ const AddNewProduct: React.FC = () => {
                 <input
                   type="number"
                   value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
+                  onChange={(e) => setPrice(readNumberField(e.target.value))}
                   placeholder="₹ 500"
                   className="form-input"
                   min="0"
@@ -318,8 +328,8 @@ const AddNewProduct: React.FC = () => {
                 <label>M.R.P. <span style={{color:'#9ca3af', fontWeight:400, fontSize:'0.8rem'}}>(optional — shows discount)</span></label>
                 <input
                   type="number"
-                  value={mrp || ''}
-                  onChange={(e) => setMrp(Number(e.target.value))}
+                  value={mrp}
+                  onChange={(e) => setMrp(readNumberField(e.target.value))}
                   placeholder="₹ 999"
                   className="form-input"
                   min="0"
@@ -330,7 +340,7 @@ const AddNewProduct: React.FC = () => {
                 <input
                   type="number"
                   value={stock}
-                  onChange={(e) => setStock(Number(e.target.value))}
+                  onChange={(e) => setStock(readNumberField(e.target.value))}
                   placeholder="Available units"
                   className="form-input"
                   min="0"
@@ -348,9 +358,9 @@ const AddNewProduct: React.FC = () => {
                 </select>
               </div>
             </div>
-            {mrp > 0 && mrp > price && (
+            {mrpValue > 0 && mrpValue > priceValue && (
               <p style={{ margin: '0.4rem 0 0', fontSize: '0.85rem', color: '#059669' }}>
-                Customers will see <strong>{Math.round(((mrp - price) / mrp) * 100)}% OFF</strong> on this product.
+                Customers will see <strong>{Math.round(((mrpValue - priceValue) / mrpValue) * 100)}% OFF</strong> on this product.
               </p>
             )}
           </div>
@@ -370,7 +380,7 @@ const AddNewProduct: React.FC = () => {
               <VariantEditor
                 variants={variants}
                 onChange={setVariants}
-                defaults={{ price, mrp }}
+                defaults={{ price: priceValue, mrp: mrpValue }}
               />
             )}
           </div>

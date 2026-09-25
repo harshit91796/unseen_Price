@@ -1,13 +1,16 @@
 import React from 'react';
 import { Delete, AddCircleOutline, ContentCopy } from '@mui/icons-material';
+import { NumberField, readNumberField } from '../../utils/numberField';
 import './VariantEditor.css';
 
 export interface Variant {
   size: string;
   color: string;
-  price: number;
-  mrp: number;
-  stock: number;
+  // NumberField, not number: a row has to be able to start empty, otherwise
+  // every box shows 0 and the typed price comes out as "0550".
+  price: NumberField;
+  mrp: NumberField;
+  stock: NumberField;
   sku: string;
 }
 
@@ -21,9 +24,9 @@ interface VariantEditorProps {
 const emptyVariant = (): Variant => ({
   size: '',
   color: '',
-  price: 0,
-  mrp: 0,
-  stock: 0,
+  price: '',
+  mrp: '',
+  stock: '',
   sku: ''
 });
 
@@ -31,7 +34,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, defau
   const addRow = () => {
     onChange([
       ...variants,
-      { ...emptyVariant(), price: defaults?.price ?? 0, mrp: defaults?.mrp ?? 0 }
+      { ...emptyVariant(), price: defaults?.price ?? '', mrp: defaults?.mrp ?? '' }
     ]);
   };
 
@@ -90,9 +93,11 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, defau
                   <tr key={idx} className={isDup ? 'variant-row-dup' : ''}>
                     <td><input type="text" value={v.size} onChange={e => update(idx, 'size', e.target.value)} placeholder="e.g. M" /></td>
                     <td><input type="text" value={v.color} onChange={e => update(idx, 'color', e.target.value)} placeholder="e.g. Red" /></td>
-                    <td><input type="number" min={0} value={v.price || ''} onChange={e => update(idx, 'price', Number(e.target.value))} /></td>
-                    <td><input type="number" min={0} value={v.mrp || ''} onChange={e => update(idx, 'mrp', Number(e.target.value))} placeholder="optional" /></td>
-                    <td><input type="number" min={0} value={v.stock || ''} onChange={e => update(idx, 'stock', Number(e.target.value))} /></td>
+                    {/* readNumberField keeps an empty box empty instead of making it 0,
+                        and lets 0 be typed into stock - which `|| ''` silently blocked. */}
+                    <td><input type="number" min={0} value={v.price} onChange={e => update(idx, 'price', readNumberField(e.target.value))} /></td>
+                    <td><input type="number" min={0} value={v.mrp} onChange={e => update(idx, 'mrp', readNumberField(e.target.value))} placeholder="optional" /></td>
+                    <td><input type="number" min={0} value={v.stock} onChange={e => update(idx, 'stock', readNumberField(e.target.value))} /></td>
                     <td><input type="text" value={v.sku} onChange={e => update(idx, 'sku', e.target.value)} placeholder="optional" /></td>
                     <td className="variant-actions">
                       <button type="button" onClick={() => duplicateRow(idx)} title="Duplicate row"><ContentCopy fontSize="small" /></button>

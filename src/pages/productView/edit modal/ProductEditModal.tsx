@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import './ProductEditModal.css';
 import { Close, Save, AddAPhoto } from '@mui/icons-material';
 import { uploadImagesToSupabase } from '../../../services/service';
+import { NumberField, readNumberField, toNumber, fromSaved } from '../../../utils/numberField';
 import { toast } from 'react-toastify';
 
 interface ProductEditModalProps {
@@ -19,9 +20,10 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
 }) => {
   const [name, setName] = useState<string>(product?.name || '');
   const [description, setDescription] = useState<string>(product?.description || '');
-  const [price, setPrice] = useState<number>(product?.price || 0);
-  const [mrp, setMrp] = useState<number>(product?.mrp || 0);
-  const [stock, setStock] = useState<number>(product?.stock || 0);
+  const [price, setPrice] = useState<NumberField>(fromSaved(product?.price));
+  const [mrp, setMrp] = useState<NumberField>(fromSaved(product?.mrp));
+  // keepZero: 0 in stock is real information, not an empty box.
+  const [stock, setStock] = useState<NumberField>(fromSaved(product?.stock, true));
   const [isAvailable, setIsAvailable] = useState<boolean>(product?.isAvailable ?? true);
   const [genderCategory, setGenderCategory] = useState<string>(product?.genderCategory || 'mens');
   const [productCategory, setProductCategory] = useState<string>(product?.productCategory || 'Extra');
@@ -38,9 +40,9 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
     if (!isOpen || !product) return;
     setName(product.name || '');
     setDescription(product.description || '');
-    setPrice(product.price || 0);
-    setMrp(product.mrp || 0);
-    setStock(product.stock || 0);
+    setPrice(fromSaved(product.price));
+    setMrp(fromSaved(product.mrp));
+    setStock(fromSaved(product.stock, true));
     setIsAvailable(product.isAvailable ?? true);
     setGenderCategory(product.genderCategory || 'mens');
     setProductCategory(product.productCategory || 'Extra');
@@ -87,10 +89,13 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
     if (name !== product.name) updatedData.name = name;
     if (description !== product.description) updatedData.description = description;
-    if (price !== product.price) updatedData.price = price;
-    const newMrp = mrp > 0 ? mrp : null;
+    const priceValue = toNumber(price);
+    const mrpValue = toNumber(mrp);
+    const stockValue = toNumber(stock);
+    if (priceValue !== product.price) updatedData.price = priceValue;
+    const newMrp = mrpValue > 0 ? mrpValue : null;
     if (newMrp !== (product.mrp ?? null)) updatedData.mrp = newMrp;
-    if (stock !== product.stock) updatedData.stock = stock;
+    if (stockValue !== product.stock) updatedData.stock = stockValue;
     if (isAvailable !== product.isAvailable) updatedData.isAvailable = isAvailable;
     if (genderCategory !== product.genderCategory) updatedData.genderCategory = genderCategory;
     if (productCategory !== product.productCategory) updatedData.productCategory = productCategory;
@@ -180,8 +185,9 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     type="number"
                     value={price}
                     min={0}
-                    onChange={(e) => setPrice(Number(e.target.value))}
+                    onChange={(e) => setPrice(readNumberField(e.target.value))}
                     className="product-edit-input"
+                    placeholder="₹ 500"
                     required
                   />
                 </label>
@@ -190,9 +196,9 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   M.R.P. (₹) — optional
                   <input
                     type="number"
-                    value={mrp || ''}
+                    value={mrp}
                     min={0}
-                    onChange={(e) => setMrp(Number(e.target.value))}
+                    onChange={(e) => setMrp(readNumberField(e.target.value))}
                     className="product-edit-input"
                     placeholder="Leave empty if no discount"
                   />
@@ -204,8 +210,9 @@ const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     type="number"
                     value={stock}
                     min={0}
-                    onChange={(e) => setStock(Number(e.target.value))}
+                    onChange={(e) => setStock(readNumberField(e.target.value))}
                     className="product-edit-input"
+                    placeholder="Available units"
                     required
                   />
                 </label>

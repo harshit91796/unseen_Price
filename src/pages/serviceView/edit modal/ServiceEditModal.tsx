@@ -3,6 +3,7 @@ import { Close, Save, AddAPhoto } from '@mui/icons-material';
 import { uploadImagesToSupabase } from '../../../services/service';
 import { PRICE_TYPES, OTHER_SERVICE_TYPE, prettyServiceType } from '../../../constants/serviceOptions';
 import useServiceTypes from '../../../hooks/useServiceTypes';
+import { NumberField, readNumberField, toNumber, fromSaved } from '../../../utils/numberField';
 import { toast } from 'react-toastify';
 // Reuses the product modal's styling so both edit screens look identical.
 import '../../productView/edit modal/ProductEditModal.css';
@@ -25,8 +26,8 @@ interface ServiceEditModalProps {
 const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onClose, service, onUpdate }) => {
   const [name, setName] = useState<string>(service?.name || '');
   const [description, setDescription] = useState<string>(service?.description || '');
-  const [price, setPrice] = useState<number>(service?.price || 0);
-  const [mrp, setMrp] = useState<number>(service?.mrp || 0);
+  const [price, setPrice] = useState<NumberField>(fromSaved(service?.price));
+  const [mrp, setMrp] = useState<NumberField>(fromSaved(service?.mrp));
   const [priceType, setPriceType] = useState<string>(service?.priceType || 'fixed');
   const [duration, setDuration] = useState<string>(service?.duration || '');
   const [serviceType, setServiceType] = useState<string>(service?.serviceType || '');
@@ -60,8 +61,8 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onClose, se
     setCustomType('');
     setName(service.name || '');
     setDescription(service.description || '');
-    setPrice(service.price || 0);
-    setMrp(service.mrp || 0);
+    setPrice(fromSaved(service.price));
+    setMrp(fromSaved(service.mrp));
     setPriceType(service.priceType || 'fixed');
     setDuration(service.duration || '');
     setServiceType(service.serviceType || '');
@@ -99,14 +100,16 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onClose, se
     if (isOtherType && customType.trim().length < 2) {
       return toast.warning('Tell us what kind of service this is, e.g. Tailor or Car Wash.');
     }
-    if (price <= 0) return toast.warning('Enter a price above zero.');
+    if (toNumber(price) <= 0) return toast.warning('Enter a price above zero.');
 
     // Send only what changed, so nothing else on the listing is disturbed.
     const updatedData: any = {};
     if (name !== service.name) updatedData.name = name;
     if (description !== service.description) updatedData.description = description;
-    if (price !== service.price) updatedData.price = price;
-    const newMrp = mrp > 0 ? mrp : null;
+    const priceValue = toNumber(price);
+    const mrpValue = toNumber(mrp);
+    if (priceValue !== service.price) updatedData.price = priceValue;
+    const newMrp = mrpValue > 0 ? mrpValue : null;
     if (newMrp !== (service.mrp ?? null)) updatedData.mrp = newMrp;
     if (priceType !== service.priceType) updatedData.priceType = priceType;
     if (duration !== service.duration) updatedData.duration = duration;
@@ -199,8 +202,9 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onClose, se
                     type="number"
                     value={price}
                     min={0}
-                    onChange={(e) => setPrice(Number(e.target.value))}
+                    onChange={(e) => setPrice(readNumberField(e.target.value))}
                     className="product-edit-input"
+                    placeholder="₹ 500"
                     required
                   />
                 </label>
@@ -209,9 +213,9 @@ const ServiceEditModal: React.FC<ServiceEditModalProps> = ({ isOpen, onClose, se
                   Original price (₹) — optional
                   <input
                     type="number"
-                    value={mrp || ''}
+                    value={mrp}
                     min={0}
-                    onChange={(e) => setMrp(Number(e.target.value))}
+                    onChange={(e) => setMrp(readNumberField(e.target.value))}
                     className="product-edit-input"
                     placeholder="Leave empty if no discount"
                   />
