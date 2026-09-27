@@ -4,21 +4,26 @@ import logo from '../../assets/images/l2.png';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { clearUser } from '../../redux/user/userSlice';
-import { 
-  Search, 
-  Notifications, 
-  Menu, 
+import {
+  Search,
+  Menu,
   Close,
   Home,
-  Info,
   Build,
   VideoLibrary,
   Favorite,
-  ContactMail,
   Person,
   ExitToApp,
   Login
 } from '@mui/icons-material';
+
+// via.placeholder.com no longer resolves, so the old fallback rendered a broken
+// image icon for every user without a photo. Inline so it cannot fail.
+const DEFAULT_AVATAR =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E" +
+  "%3Ccircle cx='20' cy='20' r='20' fill='%23d1d5db'/%3E" +
+  "%3Ccircle cx='20' cy='16' r='6.5' fill='%239ca3af'/%3E" +
+  "%3Cpath d='M7 37c0-7 6-11 13-11s13 4 13 11z' fill='%239ca3af'/%3E%3C/svg%3E";
 
 const Navbar: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -36,20 +41,14 @@ const Navbar: React.FC = () => {
     navigate('/');
   };
 
-  const handleProfileClick = (e: React.MouseEvent) => {
-    if (!user) {
-      e.preventDefault();
-      navigate('/login');
-    }
-  };
-
+  // About and Contact used to be here as "#about" and "#contact". No element
+  // with either id exists anywhere in the app, so both links did nothing when
+  // clicked. Contact is already served by the email in the footer.
   const navLinks = [
     { path: '/', label: 'Home', icon: <Home /> },
-    { path: '#about', label: 'About', icon: <Info /> },
     { path: '/pricing', label: 'Pricing', icon: <Build /> },
     { path: '/videos', label: 'Videos', icon: <VideoLibrary /> },
     { path: '/wishlist', label: 'Wishlist', icon: <Favorite /> },
-    { path: '#contact', label: 'Contact', icon: <ContactMail /> },
   ];
 
   return (
@@ -71,17 +70,21 @@ const Navbar: React.FC = () => {
         <div className="auth-section">
           {user ? (
             <>
-              <Link to="/userProfile" onClick={handleProfileClick}>
-                <div className="topbar-icons">
+              <div className="topbar-icons">
+                {/* These were one <Link to="/userProfile"> wrapping all three, so
+                    tapping the magnifier opened the profile page. The bell is gone:
+                    there is no notifications feature to open. */}
+                <Link to="/search/all" className="topbar-icon-link" aria-label="Search shops and products">
                   <Search />
-                  <Notifications />
-                  <img 
-                    src={user.profilePic || "https://via.placeholder.com/50"}
-                    alt="User Avatar" 
+                </Link>
+                <Link to="/userProfile" className="topbar-icon-link" aria-label="Your profile">
+                  <img
+                    src={user.profilePic || DEFAULT_AVATAR}
+                    alt=""
                     className="user-avatar-nav"
                   />
-                </div>
-              </Link>
+                </Link>
+              </div>
               <button className="logout-btn" onClick={handleLogout}>
                 Logout
               </button>
@@ -102,12 +105,12 @@ const Navbar: React.FC = () => {
         {user && (
           <div className="sidebar-user">
             <img 
-              src={user.profilePic || "https://via.placeholder.com/50"}
+              src={user.profilePic || DEFAULT_AVATAR}
               alt="User Avatar" 
               className="sidebar-avatar"
             />
             <div className="sidebar-user-info">
-              <h3>{user.username || 'User'}</h3>
+              <h3>{user.name || 'User'}</h3>
               <p>{user.email || 'user@example.com'}</p>
             </div>
           </div>
@@ -125,10 +128,7 @@ const Navbar: React.FC = () => {
         <div className="sidebar-auth">
           {user ? (
             <>
-              <Link to="/userProfile" className="sidebar-profile-btn" onClick={() => {
-                handleProfileClick;
-                toggleSidebar();
-              }}>
+              <Link to="/userProfile" className="sidebar-profile-btn" onClick={toggleSidebar}>
                 <Person />
                 <span>Profile</span>
               </Link>

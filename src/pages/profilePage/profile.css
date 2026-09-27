@@ -748,3 +748,56 @@
   }
 }
   
+/* Call and Directions — the two actions someone standing on a street wants.
+   The phone was already a tel: link, but rendered as small grey text among
+   the other detail rows, so nothing looked tappable. */
+.shop-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.shop-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.shop-action-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.shop-action-primary {
+  background: #ffffff;
+  color: #2D3250;
+  border-color: #ffffff;
+}
+
+.shop-action-primary:hover {
+  background: #f1f5f9;
+}
+
+/* Thumb-friendly and full width when the card is narrow. */
+@media (max-width: 480px) {
+  .shop-action-row {
+    gap: 0.5rem;
+  }
+
+  .shop-action-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.65rem 0.75rem;
+  }
+}

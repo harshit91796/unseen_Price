@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './profile.css';
-import { Edit, AccessTime, LocationOn, Phone, Category, Store, Delete, RoomService, Schedule, EventAvailable } from '@mui/icons-material';
+import { Edit, AccessTime, LocationOn, Phone, Category, Delete, Schedule, EventAvailable, Directions } from '@mui/icons-material';
 import { Link, useParams } from 'react-router-dom';
 // import { shopeImages } from '../../Pictures';
 import { getShopDetails, getShopProducts, getShopServices, updateShop, updateProduct, updateService, getAdvertisementNearby } from '../../Api';
@@ -495,70 +495,97 @@ const Profile = () => {
                 </span>
               </div>
             )}
-            <div className="shop-info-details">
-              {(() => {
-                const addr = shopDetails?.address;
-                const coords = shopDetails?.targeting?.coordinates;
-                const fullAddress = addr
-                  ? [addr.street, addr.city, addr.state, addr.zipCode, addr.country].filter(Boolean).join(', ')
-                  : '';
-                // Prefer coordinates for accuracy, fall back to address string
-                let mapsUrl: string | null = null;
-                if (Array.isArray(coords) && coords.length === 2 && (coords[0] || coords[1])) {
-                  mapsUrl = `https://www.google.com/maps?q=${coords[1]},${coords[0]}`;
-                } else if (fullAddress) {
-                  mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`;
-                }
-                const displayLocation = addr?.city
-                  ? `${addr.city}${addr.state ? ', ' + addr.state : ''}`
-                  : 'Location not available';
-                return (
-                  <p className="shop-detail-row">
-                    <LocationOn className="shop-detail-icon" />
-                    {mapsUrl ? (
-                      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="shop-detail-link" title="Open in Google Maps">
-                        {displayLocation}
-                      </a>
-                    ) : (
-                      <span>{displayLocation}</span>
-                    )}
-                  </p>
-                );
-              })()}
+            {/* Details, and the two things someone on a phone actually wants.
+                Rows render only when there is something to show: the old block
+                always drew every row, so a shop with no hours displayed a clock
+                and the bare word "to", and during loading every visitor briefly
+                read "Location not available" and "Contact not available". */}
+            {(() => {
+              const addr = shopDetails?.address;
+              const coords = shopDetails?.targeting?.coordinates;
+              const hasPin = Array.isArray(coords) && coords.length === 2 && (coords[0] || coords[1]);
 
-              {(() => {
-                const phone = shopDetails?.contact?.phone || (typeof shopDetails?.contact === 'string' ? shopDetails.contact : '');
-                const email = shopDetails?.contact?.email;
-                const display = phone || email || 'Contact not available';
-                const isPhone = !!phone;
-                const isEmail = !phone && !!email;
-                return (
-                  <p className="shop-detail-row">
-                    <Phone className="shop-detail-icon" />
-                    {isPhone ? (
-                      <a href={`tel:${phone.replace(/\s+/g, '')}`} className="shop-detail-link" title="Call">{display}</a>
-                    ) : isEmail ? (
-                      <a href={`mailto:${email}`} className="shop-detail-link" title="Email">{display}</a>
-                    ) : (
-                      <span>{display}</span>
-                    )}
-                  </p>
-                );
-              })()}
+              // The full address, not just the city. It was already being built
+              // for the maps link while the page displayed "city, state" only.
+              const fullAddress = addr
+                ? [addr.street, addr.city, addr.state, addr.zipCode].filter(Boolean).join(', ')
+                : '';
 
-              <p className="shop-detail-row">
-                <AccessTime className="shop-detail-icon" />
-                <span>{shopDetails?.openTime} to {shopDetails?.closeTime}</span>
-              </p>
-              <p className="shop-detail-row">
-                <Category className="shop-detail-icon" />
-                <span>{shopDetails?.category?.name}</span>
-              </p>
-              <p className="shop-detail-row">
-                {shopDetails?.type === 'service' ? <RoomService className="shop-detail-icon" /> : <Store className="shop-detail-icon" />}
-                <span>Type: <span className="status-open">{shopDetails?.type === 'service' ? 'Service' : 'Shop'}</span></span>
-              </p>
-            </div>
+              const mapsUrl = hasPin
+                ? `https://www.google.com/maps?q=${coords[1]},${coords[0]}`
+                : (fullAddress
+                    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`
+                    : null);
+
+              const contact = shopDetails?.contact;
+              const phone = (contact && typeof contact === 'object' ? contact.phone : (typeof contact === 'string' ? contact : '')) || '';
+              const email = (contact && typeof contact === 'object' ? contact.email : '') || '';
+              const telHref = `tel:${phone.replace(/\s+/g, '')}`;
+
+              const hours = shopDetails?.openTime && shopDetails?.closeTime
+                ? `${shopDetails.openTime} to ${shopDetails.closeTime}`
+                : '';
+              const categoryName = shopDetails?.category?.name || '';
+
+              return (
+                <>
+                  <div className="shop-info-details">
+                    {fullAddress && (
+                      <p className="shop-detail-row">
+                        <LocationOn className="shop-detail-icon" />
+                        {mapsUrl ? (
+                          <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="shop-detail-link" title="Open in Google Maps">
+                            {fullAddress}
+                          </a>
+                        ) : (
+                          <span>{fullAddress}</span>
+                        )}
+                      </p>
+                    )}
+
+                    {(phone || email) && (
+                      <p className="shop-detail-row">
+                        <Phone className="shop-detail-icon" />
+                        {phone ? (
+                          <a href={telHref} className="shop-detail-link" title="Call">{phone}</a>
+                        ) : (
+                          <a href={`mailto:${email}`} className="shop-detail-link" title="Email">{email}</a>
+                        )}
+                      </p>
+                    )}
+
+                    {hours && (
+                      <p className="shop-detail-row">
+                        <AccessTime className="shop-detail-icon" />
+                        <span>{hours}</span>
+                      </p>
+                    )}
+
+                    {categoryName && (
+                      <p className="shop-detail-row">
+                        <Category className="shop-detail-icon" />
+                        <span>{categoryName}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {(phone || mapsUrl) && (
+                    <div className="shop-action-row">
+                      {phone && (
+                        <a href={telHref} className="shop-action-btn shop-action-primary">
+                          <Phone fontSize="small" /> Call
+                        </a>
+                      )}
+                      {mapsUrl && (
+                        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="shop-action-btn">
+                          <Directions fontSize="small" /> Directions
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       </section>

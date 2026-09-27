@@ -200,12 +200,10 @@
     padding: 1.5rem;
   }
 
-  .logo {
-    position: relative;
-    top: 0;
-    left: 0;
-    margin-bottom: 2rem;
-  }
+  /* Removed: an unscoped .logo rule. This page uses .login-logo, and its
+     non-media partner above is commented out, so it did nothing here - but
+     being global it also hit the site navbar on phones, giving that logo
+     position:relative and a 2rem bottom margin that shoved it above the bar. */
 
   .auth-content {
     margin-top: 0;

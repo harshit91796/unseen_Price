@@ -5,7 +5,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding: 8px 20px;
   background-color: var(--primary-100);
   box-shadow: var(--shadow-sm);
   height: 70px;
@@ -18,10 +18,13 @@
 }
 
 .logo-image {
-  position: absolute;
-  top: 0;
-  width: 180px;
-  height: 70px;
+  /* Was position:absolute, so the row reserved no space for it and between
+     769px and ~900px the first nav link was drawn on top of the cart icon.
+     Height is sized to the bar: 70px tall minus 10px padding top and bottom. */
+  display: block;
+  height: 52px;
+  width: auto;
+  object-fit: contain;
 }
 
 .nav-links {
@@ -35,7 +38,9 @@
 }
 
 .nav-links a:hover {
-  color: var(--neutral-100);
+  /* Was --neutral-100 (white) on the teal bar — 2.5:1, so pointing at a link
+     made it harder to read, not easier. Navy clears 4.5:1. */
+  color: var(--primary-color);
   font-size: 1rem;
   transition: color 0.3s;
 }
@@ -56,7 +61,7 @@
   height: 2px;
   bottom: 0;
   left: 0;
-  background-color: var(--neutral-100);
+  background-color: var(--primary-color);
   transition: width 0.3s ease;
 }
 
@@ -84,10 +89,26 @@
   color: var(--primary-100);
 }
 
+.topbar-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neutral-600);
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 50%;
+  transition: color 0.3s;
+}
+
+.topbar-icon-link:hover {
+  color: var(--primary-color);
+}
+
 .user-avatar-nav {
   width: 40px;
   height: 40px;
   border-radius: 50%;
+  object-fit: cover;
 }
 
 .hamburger {
@@ -170,8 +191,8 @@
   }
   
   .logo-image {
-    width: 180px;
-    height: 70px;
+    height: 48px;
+    width: auto;
   }
 }
 
@@ -186,17 +207,37 @@
     display: none;
   }
 
+  /* Hamburger left, logo centred, equal space reserved on the right.
+     Centring the image with position:absolute and 50% offsets is fragile here:
+     the parent link is a zero-height flex item, so any stylesheet that makes it
+     positioned turns 50% into 0 - which is exactly what a stray global .logo rule
+     in Auth.css used to do. Flex needs no such assumption, and it still works
+     once a search or profile icon is added on the right. */
+  .hamburger,
+  .auth-section {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
   .hamburger {
-    display: block;
+    display: flex;
+    align-items: center;
+  }
+
+  .auth-section {
+    justify-content: flex-end;
+  }
+
+  .logo {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    margin: 0;
   }
 
   .logo-image {
-    position: absolute;
-    top: -14px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 140px;
-    height: 70px;
+    height: 46px;
+    width: auto;
   }
 
   .topbar-icons {
@@ -225,8 +266,8 @@
   }
 
   .logo-image {
-    width: 120px;
-    height: 60px;
+    height: 42px;
+    width: auto;
   }
 
   .topbar-icons i {
@@ -250,8 +291,8 @@
 /* Handle very small screens */
 @media (max-width: 320px) {
   .logo-image {
-    width: 100px;
-    height: 50px;
+    height: 36px;
+    width: auto;
   }
 
   .topbar-icons {
@@ -274,8 +315,10 @@
 }
 
 .login-btn {
-  background-color: var(--primary-100);
-  color: white;
+  /* Was --primary-100 — the exact teal of the bar behind it. The most
+     important button for a new visitor had no shape and sat at 2.5:1. */
+  background-color: var(--primary-color);
+  color: #ffffff;
   text-decoration: none;
 }
 
@@ -380,14 +423,16 @@
 
 .sidebar-user-info h3 {
   font-size: 1.1rem;
-  color: var(--text-dark);
+  color: var(--primary-color);
   margin: 0;
 }
 
 .sidebar-user-info p {
   font-size: 0.9rem;
-  color: var(--text-light);
+  /* Was --text-light, which is #ffffff — invisible on the white sidebar. */
+  color: #6b7280;
   margin: 0.2rem 0 0 0;
+  overflow-wrap: anywhere;
 }
 
 /* Sidebar Auth Section */
