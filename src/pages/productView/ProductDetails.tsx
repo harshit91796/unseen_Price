@@ -7,8 +7,6 @@ import {
   LocalShipping,
   Verified,
   LocalOffer,
-  ArrowForward,
-  AddShoppingCart,
   LocationOn,
   Store,
   Edit,
@@ -31,6 +29,7 @@ import { computePriceInfo, stockLabel, stockBand, totalStock } from '../../utils
 import PriceDisplay from '../../components/Price/PriceDisplay';
 import StockBadge from '../../components/Price/StockBadge';
 import usePageMeta, { SITE_URL } from '../../hooks/usePageMeta';
+import ContactActions from '../../components/ContactActions/ContactActions';
 
 interface Advertisement {
   _id: string;
@@ -65,7 +64,6 @@ const ProductDetails: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
-  const [quantity, setQuantity] = useState(1);
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [visibleAds, setVisibleAds] = useState<Advertisement[]>([]);
   const [userLocation, setUserLocation] = useState<any>(null);
@@ -198,21 +196,6 @@ const ProductDetails: React.FC = () => {
     !!shopDetails?.owner &&
     currentUser.user._id === shopDetails.owner;
 
-  const handleAddToCart = () => {
-    if (!selectedSize) {
-      toast.warning('Please select a size');
-      return;
-    }
-    toast.success('Added to cart successfully');
-  };
-
-  const handleBuyNow = () => {
-    if (!selectedSize) {
-      toast.warning('Please select a size');
-      return;
-    }
-    // Implement buy now logic
-  };
 
   const handleUpdateProduct = async (updatedData: any) => {
     if (!productId) return;
@@ -394,20 +377,6 @@ const ProductDetails: React.FC = () => {
               </div>
             )}
 
-            <div className="quantity-selection">
-              <h3>Quantity</h3>
-              <div className="quantity-controls">
-                <button 
-                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                  disabled={quantity <= 1}
-                >-</button>
-                <span>{quantity}</span>
-                <button 
-                  onClick={() => setQuantity(q => Math.min(10, q + 1))}
-                  disabled={quantity >= 10}
-                >+</button>
-              </div>
-            </div>
           </div>
 
           <div className="product-description">
@@ -415,20 +384,16 @@ const ProductDetails: React.FC = () => {
             <p>{productDetails.description}</p>
           </div>
 
-          <div className="product-actions">
-            <button 
-              className="btn btn-secondary"
-              onClick={handleAddToCart}
-            >
-              <AddShoppingCart /> Add to Cart
-            </button>
-            <button 
-              className="btn btn-primary"
-              onClick={handleBuyNow}
-            >
-              Buy Now <ArrowForward />
-            </button>
-          </div>
+          {/* Was Add to Cart and Buy Now. There is no cart and no checkout in
+              this product - people find a shop and contact or visit it - so Buy Now
+              was an empty function and Add to Cart announced a success that never
+              happened. */}
+          <ContactActions
+            phone={shopDetails?.contact?.phone}
+            coordinates={shopDetails?.targeting?.coordinates}
+            address={shopDetails?.address}
+            subject={productDetails.name}
+          />
         </div>
       </div>
 

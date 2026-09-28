@@ -43,6 +43,10 @@ const pinIcon = L.icon({
 });
 
 const INDIA_CENTER: [number, number] = [22.9734, 78.6569];   // [lat, lng] for Leaflet
+
+/** City scale. Below this the map starts drawing national boundaries — see the
+    note where the map is created. */
+const MIN_ZOOM = 11;
 const hasPin = (c: [number, number] | null): c is [number, number] =>
   Array.isArray(c) && c.length === 2 && Number.isFinite(c[0]) && Number.isFinite(c[1]) && !(c[0] === 0 && c[1] === 0);
 
@@ -94,9 +98,23 @@ const LocationPicker: React.FC<Props> = ({ value, onChange, error }) => {
       ? ([value.coordinates[1], value.coordinates[0]] as [number, number])
       : INDIA_CENTER;
 
-    const map = L.map(mapEl.current, { attributionControl: true }).setView(start, hasPin(value.coordinates) ? 16 : 4);
+    // MIN_ZOOM matters legally, not just visually. OpenStreetMap renders Jammu
+    // and Kashmir along the Line of Control rather than as the Survey of India
+    // depicts it, and publishing a map of India that does not conform to Survey
+    // of India maps is an offence under the Criminal Law Amendment Act, 1961.
+    // This picker only ever needs to place a pin on a building, so the map is
+    // held at city scale where no international boundary is drawn.
+    //
+    // This reduces the exposure; it does not remove it for a shop sitting near a
+    // border. The complete fix is a Survey of India compliant tile provider such
+    // as Mappls (MapmyIndia) - a change of the tile URL and an API key.
+    const map = L.map(mapEl.current, {
+      attributionControl: true,
+      minZoom: MIN_ZOOM
+    }).setView(start, hasPin(value.coordinates) ? 16 : MIN_ZOOM);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
+      minZoom: MIN_ZOOM,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 

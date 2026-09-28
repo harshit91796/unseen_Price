@@ -1,0 +1,91 @@
+/* Shared by the product, service and shop pages. Sized for a thumb first: these
+   are the primary actions on a phone, standing outside a shop. */
+.contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.contact-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.contact-action:hover {
+  transform: translateY(-1px);
+}
+
+/* On a white page */
+.contact-actions-onLight .contact-action {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #2D3250;
+}
+
+.contact-actions-onLight .contact-action:hover {
+  background: #f3f4f6;
+}
+
+.contact-actions-onLight .contact-action-primary {
+  background: #2D3250;
+  border-color: #2D3250;
+  color: #ffffff;
+}
+
+.contact-actions-onLight .contact-action-primary:hover {
+  background: #424769;
+}
+
+/* On the navy shop card */
+.contact-actions-onDark .contact-action {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.contact-actions-onDark .contact-action:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.contact-actions-onDark .contact-action-primary {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #2D3250;
+}
+
+.contact-actions-onDark .contact-action-primary:hover {
+  background: #f1f5f9;
+}
+
+/* WhatsApp keeps its own colour in both themes — people recognise it by colour. */
+.contact-action-whatsapp {
+  background: #25D366 !important;
+  border-color: #25D366 !important;
+  color: #ffffff !important;
+}
+
+.contact-action-whatsapp:hover {
+  background: #1da851 !important;
+  border-color: #1da851 !important;
+}
+
+/* Full width and evenly split once the row gets tight. */
+@media (max-width: 480px) {
+  .contact-action {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.8rem 0.6rem;
+    font-size: 0.9rem;
+  }
+}

@@ -20,6 +20,7 @@ import StarRating from '../../components/Reviews/StarRating';
 import ShareButton from '../../components/ShareButton/ShareButton';
 import PriceDisplay from '../../components/Price/PriceDisplay';
 import usePageMeta, { SITE_URL } from '../../hooks/usePageMeta';
+import ContactActions from '../../components/ContactActions/ContactActions';
 import { useSelector } from 'react-redux';
 import { Edit } from '@mui/icons-material';
 import ServiceEditModal from './edit modal/ServiceEditModal';
@@ -199,10 +200,17 @@ const ServiceDetail: React.FC = () => {
             </div>
           )}
 
+          {/* "Book Now" and "Inquire" were a button with no onClick at all —
+              there is no booking system behind it. These three do what the
+              product actually supports. */}
+          <ContactActions
+            phone={typeof service.shopId === 'object' ? service.shopId?.contact?.phone : undefined}
+            coordinates={typeof service.shopId === 'object' ? service.shopId?.targeting?.coordinates : undefined}
+            address={typeof service.shopId === 'object' ? service.shopId?.address : undefined}
+            subject={service.name}
+          />
+
           <div className="service-actions">
-            <button className="service-cta-btn primary">
-              {service.bookingRequired ? 'Book Now' : 'Inquire'}
-            </button>
             {service.shopId && typeof service.shopId === 'object' && (
               <Link to={`/shop/${service.shopId._id}`} className="service-cta-btn secondary">
                 View Business

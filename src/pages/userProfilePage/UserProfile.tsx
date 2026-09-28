@@ -8,8 +8,8 @@ import {
   Analytics,
   Email,
   Phone,
-  TrendingUp,
-  ShoppingBag,
+  RateReview,
+  Star,
   StoreMallDirectory,
   Category,
   CheckCircle,
@@ -65,8 +65,8 @@ interface ShopData {
   };
   isActive: boolean;
   isDeleted?: boolean;
-  revenue?: string;
-  orders?: number;
+  rating?: number;
+  reviewCount?: number;
 }
 
 const UserProfile = () => {
@@ -149,14 +149,6 @@ const UserProfile = () => {
     }
   };
 
-  const formatCurrency = (amount: string | undefined) => {
-    const value = parseInt(amount || '0');
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(value);
-  };
 
   const handleDeleteShop = async () => {
     if (!deleteConfirmModal.shopId) return;
@@ -217,29 +209,55 @@ const UserProfile = () => {
           </div>
         </div>
         
-        <div className="stats-grid">
-          <div className="stat-card">
-            <StoreMallDirectory className="stat-icon" />
-            <div className="stat-info">
-              <h3>Total Shops</h3>
-              <p>{userData?.data.shops.length || 0}</p>
+        {(() => {
+          // Total Revenue and Total Orders used to sit here as the literals
+          // ₹127,000 and 359 — the same figures for every owner, typed straight
+          // into the markup. There is no Order model in the backend and no
+          // checkout in the product (a customer finds a shop and calls or visits),
+          // so neither number could ever have become real. These four come from
+          // data this page has already loaded.
+          const live = (userData?.data.shops || []).filter((s: ShopData) => s.isDeleted !== true);
+          const shopCount = live.filter((s: ShopData) => s.type !== 'service').length;
+          const serviceCount = live.filter((s: ShopData) => s.type === 'service').length;
+          const reviewCount = live.reduce((sum: number, s: any) => sum + (s.reviewCount || 0), 0);
+          const rated = live.filter((s: any) => (s.reviewCount || 0) > 0);
+          const averageRating = rated.length
+            ? (rated.reduce((sum: number, s: any) => sum + (s.rating || 0), 0) / rated.length).toFixed(1)
+            : null;
+
+          return (
+            <div className="stats-grid">
+              <div className="stat-card">
+                <StoreMallDirectory className="stat-icon" />
+                <div className="stat-info">
+                  <h3>Shops</h3>
+                  <p>{shopCount}</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <RoomService className="stat-icon" />
+                <div className="stat-info">
+                  <h3>Services</h3>
+                  <p>{serviceCount}</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <RateReview className="stat-icon" />
+                <div className="stat-info">
+                  <h3>Reviews</h3>
+                  <p>{reviewCount}</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <Star className="stat-icon" />
+                <div className="stat-info">
+                  <h3>Average rating</h3>
+                  <p>{averageRating ?? String.fromCharCode(8212)}</p>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="stat-card">
-            <TrendingUp className="stat-icon" />
-            <div className="stat-info">
-              <h3>Total Revenue</h3>
-              <p>₹127,000</p>
-            </div>
-          </div>
-          <div className="stat-card">
-            <ShoppingBag className="stat-icon" />
-            <div className="stat-info">
-              <h3>Total Orders</h3>
-              <p>359</p>
-            </div>
-          </div>
-        </div>
+          );
+        })()}
       </section>
 
       {/* Navigation */}

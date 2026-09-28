@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './profile.css';
-import { Edit, AccessTime, LocationOn, Phone, Category, Delete, Schedule, EventAvailable, Directions } from '@mui/icons-material';
+import { Edit, AccessTime, LocationOn, Phone, Category, Delete, Schedule, EventAvailable } from '@mui/icons-material';
 import { Link, useParams } from 'react-router-dom';
-// import { shopeImages } from '../../Pictures';
 import { getShopDetails, getShopProducts, getShopServices, updateShop, updateProduct, updateService, getAdvertisementNearby } from '../../Api';
 import InlineAdCard from '../../components/InlineAdCard/InlineAdCard';
 import { filterByFrequencyCap, recordImpressions, dismissAd } from '../../utils/adFrequency';
@@ -19,6 +18,7 @@ import ShareButton from '../../components/ShareButton/ShareButton';
 import PriceDisplay from '../../components/Price/PriceDisplay';
 import StockBadge from '../../components/Price/StockBadge';
 import usePageMeta, { SITE_URL } from '../../hooks/usePageMeta';
+import ContactActions from '../../components/ContactActions/ContactActions';
 
 interface PaginationInfo {
   page: number;
@@ -569,20 +569,13 @@ const Profile = () => {
                     )}
                   </div>
 
-                  {(phone || mapsUrl) && (
-                    <div className="shop-action-row">
-                      {phone && (
-                        <a href={telHref} className="shop-action-btn shop-action-primary">
-                          <Phone fontSize="small" /> Call
-                        </a>
-                      )}
-                      {mapsUrl && (
-                        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="shop-action-btn">
-                          <Directions fontSize="small" /> Directions
-                        </a>
-                      )}
-                    </div>
-                  )}
+                  <ContactActions
+                    phone={phone}
+                    coordinates={coords}
+                    address={addr}
+                    subject={shopDetails?.name}
+                    variant="onDark"
+                  />
                 </>
               );
             })()}

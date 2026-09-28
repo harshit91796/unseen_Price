@@ -680,3 +680,10 @@
   position: relative;
 }
   
+
+  /* The shop card is a link now, so it must not inherit link underlines. */
+  a.shop-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }

@@ -1,8 +1,8 @@
 import './feed.css';
 import { Link } from 'react-router-dom';
-import { shopeImages } from '../../Pictures';
 import { useEffect, useState, useCallback } from 'react';
-import { getAdvertisementNearby, getCategories } from '../../Api';
+import { getAdvertisementNearby, getCategories, searchShops } from '../../Api';
+import { calculateDistance, formatDistance } from '../../utils/distance';
 import { categoryIcon } from '../../constants/categoryIcons';
 import { filterByFrequencyCap, recordImpressions } from '../../utils/adFrequency';
 import { LocationOn, ArrowBack, ArrowForward } from '@mui/icons-material';
@@ -54,6 +54,10 @@ const Feed = () => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [dbCategories, setDbCategories] = useState<any[]>([]);
+  const [nearbyShops, setNearbyShops] = useState<any[]>([]);
+  // Whether the list below was actually filtered by the viewer location, so
+  // the heading only claims "near you" when that is true.
+  const [shopsAreNearby, setShopsAreNearby] = useState(false);
 
   // One request, and the tiles match the shop dropdown. A failure leaves the
   // section empty rather than showing categories nothing can be listed under.
@@ -68,6 +72,39 @@ const Feed = () => {
       .catch(() => {});
     return () => { active = false; };
   }, []);
+
+  // Real shops, replacing twelve invented ones. Runs once the location has
+  // resolved so it does not fire twice; falls back to the newest shops when
+  // the viewer has not shared a location.
+  useEffect(() => {
+    if (locationLoading) return;
+    let active = true;
+
+    const latitude = userLocation?.coordinates?.latitude;
+    const longitude = userLocation?.coordinates?.longitude;
+    const byLocation = Number.isFinite(latitude) && Number.isFinite(longitude);
+
+    const params = new URLSearchParams({ limit: '8' });
+    if (byLocation) {
+      params.set('latitude', String(latitude));
+      params.set('longitude', String(longitude));
+      params.set('radius', '15');
+    }
+
+    searchShops(params.toString())
+      .then((response) => {
+        if (!active) return;
+        const list = Array.isArray(response) ? response : (response?.data || []);
+        setNearbyShops(list.filter((shop: any) => shop && shop._id));
+        setShopsAreNearby(byLocation);
+      })
+      .catch(() => {
+        // An empty section is better than inventing shops that do not exist.
+        if (active) setNearbyShops([]);
+      });
+
+    return () => { active = false; };
+  }, [locationLoading, userLocation]);
 
   useEffect(() => {
     getUserLocation();
@@ -219,20 +256,6 @@ const Feed = () => {
     return advertisements.slice(currentAdIndex, currentAdIndex + ADS_PER_PAGE);
   }, [advertisements, currentAdIndex]);
 
-  const trendingShops = [
-    { name: 'HD Boys', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop1 },
-    { name: 'Variety clothes', location: 'roshan pura, bhopal', distance: '2km', image: shopeImages.shop2 },
-    { name: 'Gen-Z', location: 'jawahar chowk, bhopal', distance: '1.8km', image: shopeImages.shop3 },
-    { name: 'Dxter', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop4 },
-    { name: 'Quality Wears', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop5 },
-    { name: 'HD Boys', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop6 },
-    { name: 'HD Boys', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop7 },
-    { name: 'HD Boys', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop8 },
-    { name: 'HD Boys', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop9 },
-    { name: 'HD Boys', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop10 },
-    { name: 'HD Boys', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop11 },
-    { name: 'HD Boys', location: 'new market, bhopal', distance: '1.5km', image: shopeImages.shop12 }
-  ];
 
   // Categories come from the database, the same list owners pick from when they
   // create a shop. They used to be hardcoded here, and the two lists had drifted:
@@ -406,30 +429,64 @@ const Feed = () => {
         </div>
       )}
 
-      {/* Trending Shops Section */}
-      <section className="trending-section">
-        <h2>Trending Shops Near <span className="accent-text">You</span></h2>
-        <div className="shops-grid">
-          {trendingShops.map((shop, index) => (
-            <div className="shop-card" key={index}>
-              <div className="shop-image-wrapper">
-                <img src={shop.image} alt={shop.name} className="shop-image" />
-              </div>
-              <div className="shop-info">
-                <h3>{shop.name}</h3>
-                <p className="location">
-                  <span className="location-icon">📍</span>
-                  {shop.location}
-                </p>
-                <span className="distance">
-                  <span className="distance-icon">🚶</span>
-                  {shop.distance}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Real shops from the API. This block used to render twelve invented
+          businesses with invented walking distances — ten of them the same shop
+          repeated — under a heading that said "Near You", and the cards were
+          plain divs so tapping one did nothing. Hidden entirely when there is
+          nothing to show, rather than filled with placeholders. */}
+      {nearbyShops.length > 0 && (
+        <section className="trending-section">
+          <h2>
+            {shopsAreNearby ? (
+              <>Shops Near <span className="accent-text">You</span></>
+            ) : (
+              <>Explore <span className="accent-text">Shops</span></>
+            )}
+          </h2>
+          <div className="shops-grid">
+            {nearbyShops.map((shop) => {
+              const coords = shop?.targeting?.coordinates;
+              const hasPin = Array.isArray(coords) && coords.length === 2 && (coords[0] || coords[1]);
+              const latitude = userLocation?.coordinates?.latitude;
+              const longitude = userLocation?.coordinates?.longitude;
+              // Only shown when both ends are real; never estimated.
+              // typeof, not Number.isFinite: only the former narrows the optional away.
+              const distance = hasPin && typeof latitude === 'number' && typeof longitude === 'number'
+                ? formatDistance(calculateDistance(latitude, longitude, coords[1], coords[0]))
+                : '';
+              const place = [shop?.address?.city, shop?.address?.state].filter(Boolean).join(', ');
+
+              return (
+                <Link to={`/shop/${shop._id}`} className="shop-card" key={shop._id}>
+                  <div className="shop-image-wrapper">
+                    <SafeImage
+                      src={shop.images?.[0]}
+                      alt={shop.name}
+                      className="shop-image"
+                      preset="CARD"
+                    />
+                  </div>
+                  <div className="shop-info">
+                    <h3>{shop.name}</h3>
+                    {place && (
+                      <p className="location">
+                        <span className="location-icon">📍</span>
+                        {place}
+                      </p>
+                    )}
+                    {distance && (
+                      <span className="distance">
+                        <span className="distance-icon">🚶</span>
+                        {distance}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 };
